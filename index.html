@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bébé 💛">
+<meta name="theme-color" content="#faf5f8">
+<title>Bébé 💛</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { background: #faf5f8; font-family: 'Nunito', 'Segoe UI', sans-serif; overflow-x: hidden; }
+  input, select, button { font-family: inherit; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ─── CONCEPTION & DATES ─────────────────────────────────────────────────────
+const CONCEPTION_DATE = new Date(2025, 11, 29);
+
+function getWeeksPregnancy() {
+  const now = new Date();
+  const diff = now - CONCEPTION_DATE;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const saWeeks = Math.floor((days + 14) / 7);
+  const saDays = (days + 14) % 7;
+  const sgWeeks = Math.floor(days / 7);
+  const sgDays = days % 7;
+  return { saWeeks, saDays, sgWeeks, sgDays, totalDays: days };
+}
+
+// ─── PERSONAL QUOTES ────────────────────────────────────────────────────────
+const DAILY_QUOTES = [
+  "Deux cœurs battent en toi, et le mien bat pour toi.",
+  "Tu es le plus bel abri que notre enfant puisse avoir.",
+  "Merci d'exister.",
+  "Pour le prénom, Pedro. Tu aimes ?",
+  "J'aime te voir grossir, ça fait toujours plus de toi.",
+  "Entre toi et moi l'écart se creuse.",
+  "Après la pluie, l'arc-en-ciel. Toujours.",
+  "Je suis jaloux de Moshe. Parce qu'il est tjr avec toi… pas pour son prénom.",
+  "Il est où ton joli petit sourire ? Je t'aime.",
+  "Regarde le ciel, il est immense, comme nos possibles.",
+  "J'ai hâte de vieillir avec toi.",
+  "Si tu continues de m'émoustiller comme ça je vais faire un petit frère à Moshe.",
+  "On construit un château, pierre par pierre.",
+  "C'est pas grave si aujourd'hui on en pleure, demain on en rira.",
+  "Je suis à toi, je serai toujours là.",
+  "Bonne journée, mon amour.",
+  "Parfois on ne dirait pas, mais tu pourras toujours compter sur moi.",
+  "Notre futur a un visage, et des cheveux, beaucoup de cheveux.",
+  "Le bonheur s'endort à mes côtés.",
+  "Une souris rose, à qui l'oiseau faisait des proses.",
+  "Le meilleur est à venir, sache-le.",
+  "Laisse-moi porter tes doutes.",
+  "Pas d'avion sans aile, pas d'amour sans elle.",
+  "Tu es ma vie. La meilleure et la plus grosse partie.",
+  "Babe, je viens de réaliser : tu ressembles à un \"b\".",
+  "Si tu lis ceci : ajd massage gratuit.",
+];
+
+// ─── FOOD SAFETY DATABASE ───────────────────────────────────────────────────
+const FOODS = [
+  { name: "poulet cuit", safe: true, note: "Bien cuit à cœur, parfait !" },
+  { name: "bœuf cuit", safe: true, note: "Bien cuit, pas de steak tartare." },
+  { name: "porc cuit", safe: true, note: "Toujours bien cuit." },
+  { name: "agneau cuit", safe: true, note: "Bien cuit à cœur." },
+  { name: "saumon cuit", safe: true, note: "Excellente source d'oméga-3 ! Bien cuit." },
+  { name: "thon cuit", safe: true, note: "OK mais max 1 fois/semaine (mercure)." },
+  { name: "crevettes cuites", safe: true, note: "Bien cuites, c'est bon !" },
+  { name: "œufs durs", safe: true, note: "Bien cuits, pas de problème." },
+  { name: "œuf", safe: true, note: "Bien cuit (dur ou en omelette bien cuite). Éviter les œufs crus ou mollets." },
+  { name: "fromage à pâte dure", safe: true, note: "Comté, emmental, parmesan… fonce !" },
+  { name: "comté", safe: true, note: "Fromage à pâte dure = autorisé !" },
+  { name: "emmental", safe: true, note: "Pas de souci, pâte dure pressée cuite." },
+  { name: "parmesan", safe: true, note: "Autorisé, même excellent en calcium !" },
+  { name: "gruyère", safe: true, note: "Pâte dure, c'est bon." },
+  { name: "cheddar", safe: true, note: "Pâte dure, autorisé." },
+  { name: "raclette", safe: true, note: "Si le fromage est bien fondu/chaud et que la croûte est retirée, c'est ok !" },
+  { name: "mozzarella", safe: true, note: "Pasteurisée c'est bon ! Vérifie l'étiquette." },
+  { name: "cream cheese", safe: true, note: "Pasteurisé, pas de souci (type Philadelphia)." },
+  { name: "yaourt", safe: true, note: "Pasteurisé, très bien pour le calcium !" },
+  { name: "lait pasteurisé", safe: true, note: "Parfait. Éviter le lait cru." },
+  { name: "lait", safe: true, note: "Pasteurisé ou UHT = OK. Éviter le lait cru." },
+  { name: "pain", safe: true, note: "Aucun souci !" },
+  { name: "pâtes", safe: true, note: "Aucun souci, bonne source d'énergie." },
+  { name: "riz", safe: true, note: "Très bien !" },
+  { name: "pomme de terre", safe: true, note: "Aucun problème." },
+  { name: "chocolat", safe: true, note: "Avec modération, fais-toi plaisir ! 🍫" },
+  { name: "glace", safe: true, note: "Industrielle pasteurisée = OK. Éviter les glaces artisanales avec œufs crus." },
+  { name: "fruits", safe: true, note: "Excellents ! Bien les laver." },
+  { name: "pomme", safe: true, note: "Bien lavée, parfait !" },
+  { name: "banane", safe: true, note: "Super pour le potassium !" },
+  { name: "orange", safe: true, note: "Plein de vitamine C !" },
+  { name: "fraise", safe: true, note: "Bien lavées, super !" },
+  { name: "mangue", safe: true, note: "Délicieux et plein de vitamines !" },
+  { name: "avocat", safe: true, note: "Excellent pour les bons gras et le folate !" },
+  { name: "légumes cuits", safe: true, note: "Parfait ! Variez les plaisirs." },
+  { name: "salade", safe: true, note: "Très bien lavée à la maison. Éviter les salades pré-emballées." },
+  { name: "tomate", safe: true, note: "Bien lavée, aucun souci." },
+  { name: "carotte", safe: true, note: "Bien lavée ou cuite, parfait !" },
+  { name: "brocoli", safe: true, note: "Super aliment grossesse ! Riche en folate." },
+  { name: "épinard", safe: true, note: "Excellents cuits, riches en fer et folate." },
+  { name: "lentilles", safe: true, note: "Super pour le fer et les protéines végétales !" },
+  { name: "quinoa", safe: true, note: "Très nutritif, bonne source de protéines." },
+  { name: "noix", safe: true, note: "Bonnes pour le cerveau du bébé ! (sauf allergie)" },
+  { name: "amande", safe: true, note: "Très bien, riche en calcium." },
+  { name: "miel", safe: true, note: "OK pour la maman (pas pour les bébés < 1 an)." },
+  { name: "confiture", safe: true, note: "Aucun souci !" },
+  { name: "café", safe: true, note: "Max 200mg/jour (≈ 1-2 tasses). Modération !" },
+  { name: "thé", safe: true, note: "1-2 tasses/jour, modération (caféine). Le thé vert est ok." },
+  { name: "tisane", safe: true, note: "La plupart sont ok. Éviter la sauge et le persil en grande quantité." },
+  { name: "jus de fruit pasteurisé", safe: true, note: "OK mais préférer les fruits entiers." },
+  { name: "eau gazeuse", safe: true, note: "Aucun problème !" },
+  { name: "pizza", safe: true, note: "Bien cuite, sans charcuterie crue ni fromage au lait cru. Sinon fonce !" },
+  { name: "burger", safe: true, note: "Viande bien cuite à cœur = OK !" },
+  { name: "sushi cuit", safe: true, note: "Les makis cuits (poulet, crevette tempura) c'est bon." },
+  { name: "houmous", safe: true, note: "Fait maison ou industriel, c'est bon !" },
+  { name: "sauce tomate", safe: true, note: "Aucun souci." },
+  { name: "huile d'olive", safe: true, note: "Excellente pour la santé !" },
+  { name: "beurre", safe: true, note: "Pasteurisé, pas de souci." },
+  { name: "crème fraîche", safe: true, note: "Pasteurisée = OK." },
+  { name: "jambon blanc", safe: "caution", note: "Sous vide et bien conservé au frais = OK. Éviter à la coupe." },
+  { name: "surimi", safe: "caution", note: "Pasteurisé et bien conservé = OK. Vérifier la chaîne du froid." },
+  { name: "mayonnaise industrielle", safe: "caution", note: "Industrielle (pasteurisée) = OK. Pas de mayo maison (œuf cru)." },
+  { name: "mayonnaise", safe: "caution", note: "Industrielle = OK. Maison avec œuf cru = interdit." },
+  { name: "tiramisu", safe: false, note: "Contient souvent des œufs crus et du mascarpone. À éviter." },
+  { name: "mousse au chocolat", safe: false, note: "Œufs crus en général. À éviter sauf version sans œufs." },
+  { name: "foie gras", safe: "caution", note: "Stérilisé (en conserve) = OK avec modération. Mi-cuit = à éviter." },
+  { name: "alcool", safe: false, note: "Zéro alcool pendant la grossesse. Aucune quantité n'est sûre." },
+  { name: "vin", safe: false, note: "Pas d'alcool du tout pendant la grossesse." },
+  { name: "bière", safe: false, note: "Même en petite quantité, l'alcool est à proscrire." },
+  { name: "sushi", safe: false, note: "Poisson cru = risque de listeria et parasites. À éviter." },
+  { name: "sashimi", safe: false, note: "Poisson cru interdit pendant la grossesse." },
+  { name: "tartare", safe: false, note: "Viande crue = risque toxoplasmose. Interdit." },
+  { name: "carpaccio", safe: false, note: "Viande/poisson cru = interdit." },
+  { name: "steak tartare", safe: false, note: "Viande crue = risque de toxoplasmose. Non." },
+  { name: "viande crue", safe: false, note: "Risque de toxoplasmose. Toujours bien cuire." },
+  { name: "viande saignante", safe: false, note: "La viande doit être bien cuite à cœur." },
+  { name: "poisson cru", safe: false, note: "Listeria, parasites. Toujours bien cuit." },
+  { name: "poisson fumé", safe: false, note: "Saumon fumé, truite fumée = risque listeria. À éviter." },
+  { name: "saumon fumé", safe: false, note: "Risque de listeria. À éviter pendant la grossesse." },
+  { name: "tarama", safe: false, note: "Œufs de poisson souvent non pasteurisés. À éviter." },
+  { name: "huître", safe: false, note: "Fruits de mer crus = interdit (listeria, hépatite A)." },
+  { name: "moule crue", safe: false, note: "Fruits de mer crus = interdit." },
+  { name: "coquillage cru", safe: false, note: "Risque d'intoxication. Toujours bien cuits." },
+  { name: "fromage au lait cru", safe: false, note: "Risque de listeria. Préférer les fromages pasteurisés." },
+  { name: "brie", safe: false, note: "Fromage à pâte molle, souvent au lait cru. À éviter." },
+  { name: "camembert", safe: false, note: "Pâte molle = risque listeria, même pasteurisé. Prudence." },
+  { name: "roquefort", safe: false, note: "Fromage à pâte persillée = risque listeria. Non." },
+  { name: "bleu", safe: false, note: "Fromages bleus/persillés = à éviter (listeria)." },
+  { name: "gorgonzola", safe: false, note: "Pâte persillée = interdit." },
+  { name: "chèvre frais", safe: false, note: "Souvent au lait cru et pâte molle. À éviter sauf si pasteurisé ET bien cuit." },
+  { name: "lait cru", safe: false, note: "Risque de listeria. Toujours pasteurisé ou UHT." },
+  { name: "charcuterie", safe: false, note: "Rillettes, pâté, saucisson, jambon cru = risque toxoplasmose et listeria." },
+  { name: "saucisson", safe: false, note: "Charcuterie crue = risque toxo. Non." },
+  { name: "jambon cru", safe: false, note: "Pas cuit = risque toxoplasmose. À éviter." },
+  { name: "pâté", safe: false, note: "Risque de listeria. À éviter." },
+  { name: "rillettes", safe: false, note: "Risque de listeria. Non." },
+  { name: "chorizo", safe: false, note: "Charcuterie crue/séchée = risque toxoplasmose." },
+  { name: "coppa", safe: false, note: "Charcuterie crue. À éviter." },
+  { name: "bresaola", safe: false, note: "Viande séchée crue. Interdit." },
+  { name: "œuf cru", safe: false, note: "Risque salmonelle. Pas d'œuf cru ou mollet." },
+  { name: "œuf mollet", safe: false, note: "Jaune pas assez cuit = risque salmonelle." },
+  { name: "mayonnaise maison", safe: false, note: "Œuf cru dedans. Interdit." },
+  { name: "salade pré-emballée", safe: false, note: "Risque de listeria. Préférer les salades lavées à la maison." },
+  { name: "graines germées", safe: false, note: "Risque bactérien élevé. À éviter." },
+  { name: "soja", safe: "caution", note: "Limiter les produits à base de soja (phytoestrogènes). Max 1/jour." },
+  { name: "tofu", safe: "caution", note: "Avec modération (soja = phytoestrogènes)." },
+  { name: "réglisse", safe: false, note: "La glycyrrhizine peut affecter le développement. À éviter." },
+  { name: "energy drink", safe: false, note: "Trop de caféine + taurine. Interdit." },
+  { name: "red bull", safe: false, note: "Interdit : excès de caféine et taurine." },
+];
+
+// ─── WEEKLY BABY INFO ───────────────────────────────────────────────────────
+const WEEKLY_BABY = {
+  4: { fruit: "Graine de pavot", emoji: "🌰", size: "1 mm", dev: "L'embryon s'implante dans l'utérus. Les cellules commencent à se spécialiser." },
+  5: { fruit: "Grain de sésame", emoji: "🫘", size: "2 mm", dev: "Le cœur commence à se former et à battre ! Le tube neural se développe." },
+  6: { fruit: "Petit pois", emoji: "🟢", size: "4 mm", dev: "Les bourgeons des bras et des jambes apparaissent. Le visage commence à se dessiner." },
+  7: { fruit: "Myrtille", emoji: "🫐", size: "1 cm", dev: "Le cerveau se développe rapidement. Les doigts commencent à se former." },
+  8: { fruit: "Framboise", emoji: "🍇", size: "1.6 cm", dev: "Tous les organes principaux sont en place. Les doigts et orteils se séparent." },
+  9: { fruit: "Cerise", emoji: "🍒", size: "2.3 cm", dev: "Le bébé bouge ! (tu ne le sens pas encore) Les organes génitaux commencent à se différencier." },
+  10: { fruit: "Fraise", emoji: "🍓", size: "3 cm", dev: "Les ongles se forment. Le bébé peut ouvrir et fermer les poings !" },
+  11: { fruit: "Figue", emoji: "🟤", size: "4 cm", dev: "Les os commencent à durcir. Le bébé a des réflexes !" },
+  12: { fruit: "Citron vert", emoji: "🍈", size: "5.5 cm", dev: "Les cordes vocales se forment. Les reins fonctionnent. Fin du 1er trimestre bientôt !" },
+  13: { fruit: "Citron", emoji: "🍋", size: "7 cm", dev: "Le bébé a des empreintes digitales ! Le risque de fausse couche diminue fortement." },
+  14: { fruit: "Nectarine", emoji: "🍑", size: "8.5 cm", dev: "Le bébé peut froncer les sourcils et loucher ! Le lanugo (duvet fin) apparaît." },
+  15: { fruit: "Pomme", emoji: "🍎", size: "10 cm", dev: "Le bébé peut percevoir la lumière. Les articulations fonctionnent." },
+  16: { fruit: "Avocat", emoji: "🥑", size: "11.5 cm", dev: "Tu pourrais bientôt sentir les premiers mouvements ! Le bébé entend les sons." },
+  17: { fruit: "Poire", emoji: "🍐", size: "13 cm", dev: "Le squelette passe de cartilage à os. Le cordon ombilical se renforce." },
+  18: { fruit: "Poivron", emoji: "🫑", size: "14 cm", dev: "Le bébé bâille et a le hoquet ! Les nerfs se recouvrent de myéline." },
+  19: { fruit: "Mangue", emoji: "🥭", size: "15 cm", dev: "Le vernix (couche protectrice) recouvre la peau. L'ouïe se développe." },
+  20: { fruit: "Banane", emoji: "🍌", size: "16.5 cm", dev: "Mi-parcours ! Le bébé avale du liquide amniotique et goûte ce que tu manges." },
+  22: { fruit: "Épi de maïs", emoji: "🌽", size: "19 cm", dev: "Les sourcils sont visibles. Le bébé développe son cycle veille/sommeil." },
+  24: { fruit: "Concombre", emoji: "🥒", size: "21 cm", dev: "Les poumons se développent. Le bébé réagit à ta voix !" },
+  26: { fruit: "Laitue", emoji: "🥬", size: "23 cm", dev: "Les yeux s'ouvrent ! Le bébé a des phases de sommeil paradoxal (il rêve ?)." },
+  28: { fruit: "Aubergine", emoji: "🍆", size: "25 cm", dev: "Le cerveau se développe énormément. Le bébé peut tourner la tête." },
+  30: { fruit: "Noix de coco", emoji: "🥥", size: "27 cm", dev: "Le bébé prend du poids rapidement. Il peut attraper ses pieds !" },
+  32: { fruit: "Ananas", emoji: "🍍", size: "29 cm", dev: "Les 5 sens fonctionnent. Le bébé rêve et a des cycles de sommeil réguliers." },
+  34: { fruit: "Petit melon", emoji: "🍈", size: "32 cm", dev: "Les poumons sont presque matures. Le bébé se met souvent tête en bas." },
+  36: { fruit: "Melon", emoji: "🍈", size: "34 cm", dev: "Le bébé est presque prêt ! Il descend dans le bassin." },
+  38: { fruit: "Citrouille", emoji: "🎃", size: "36 cm", dev: "Le bébé est à terme ! Il peut arriver à tout moment. 🎉" },
+  40: { fruit: "Pastèque", emoji: "🍉", size: "37+ cm", dev: "Terme prévu ! Le bébé est prêt à découvrir le monde. 💛" },
+};
+
+function getBabyInfo(saWeeks) {
+  const weeks = Object.keys(WEEKLY_BABY).map(Number).sort((a, b) => a - b);
+  let best = weeks[0];
+  for (const w of weeks) { if (w <= saWeeks) best = w; else break; }
+  return WEEKLY_BABY[best];
+}
+
+// ─── CALENDAR EVENTS ────────────────────────────────────────────────────────
+function generateDefaultEvents() {
+  const base = new Date(CONCEPTION_DATE);
+  const sa = (weeks, days = 0) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() - 14 + weeks * 7 + days);
+    return d.toISOString().split("T")[0];
+  };
+  return [
+    { id: "e1", title: "📞 Prise de RDV médecin/sage-femme", date: sa(6), type: "task", done: false },
+    { id: "e2", title: "💊 Début acide folique", date: sa(4), type: "task", done: true },
+    { id: "e3", title: "🏥 1ère consultation prénatale", date: sa(8), time: "09:00", type: "rdv", done: false },
+    { id: "e4", title: "🔬 Prise de sang T1", date: sa(9), time: "08:00", type: "rdv", done: false },
+    { id: "e5", title: "📋 Déclaration de grossesse", date: sa(10), type: "task", done: false, note: "Avant 14 SA — médecin ou sage-femme" },
+    { id: "e6", title: "🩻 Échographie T1 (datation)", date: sa(12), time: "10:00", type: "rdv", done: false, note: "Entre 11 et 13 SA + 6 jours" },
+    { id: "e7", title: "📬 Envoyer déclaration à la CAF", date: sa(14), type: "task", done: false },
+    { id: "e8", title: "🏥 Choisir et s'inscrire à la maternité", date: sa(14), type: "task", done: false },
+    { id: "e9", title: "👩‍⚕️ Consultation 2ème mois", date: sa(12), time: "14:00", type: "rdv", done: false },
+    { id: "e10", title: "🔬 Dépistage trisomie 21 (si souhaité)", date: sa(12), type: "task", done: false, note: "Entre 11 et 13 SA + 6" },
+    { id: "e11", title: "💼 Prévenir l'employeur", date: sa(14), type: "task", done: false },
+    { id: "e12", title: "👩‍⚕️ Consultation 3ème mois", date: sa(16), time: "10:00", type: "rdv", done: false },
+    { id: "e13", title: "🩻 Échographie T2 (morpho)", date: sa(22), time: "10:00", type: "rdv", done: false, note: "Entre 20 et 24 SA" },
+    { id: "e14", title: "👩‍⚕️ Consultation 4ème mois", date: sa(20), time: "10:00", type: "rdv", done: false },
+    { id: "e15", title: "👩‍⚕️ Consultation 5ème mois", date: sa(24), time: "10:00", type: "rdv", done: false },
+    { id: "e16", title: "🧪 Test glucose (diabète gestationnel)", date: sa(26), type: "rdv", done: false, note: "Entre 24 et 28 SA" },
+    { id: "e17", title: "👩‍⚕️ Consultation 6ème mois", date: sa(28), time: "10:00", type: "rdv", done: false },
+    { id: "e18", title: "🩻 Échographie T3", date: sa(32), time: "10:00", type: "rdv", done: false, note: "Entre 30 et 34 SA" },
+    { id: "e19", title: "🎒 Préparation à l'accouchement (début)", date: sa(28), type: "task", done: false },
+    { id: "e20", title: "👩‍⚕️ Consultation 7ème mois", date: sa(32), time: "10:00", type: "rdv", done: false },
+    { id: "e21", title: "🧳 Préparer la valise de maternité", date: sa(34), type: "task", done: false },
+    { id: "e22", title: "👩‍⚕️ Consultation 8ème mois", date: sa(36), time: "10:00", type: "rdv", done: false },
+    { id: "e23", title: "🏥 Consultation anesthésiste", date: sa(36), time: "14:00", type: "rdv", done: false },
+    { id: "e24", title: "👩‍⚕️ Consultation 9ème mois", date: sa(39), time: "10:00", type: "rdv", done: false },
+    { id: "e25", title: "🍼 Jour J estimé !", date: sa(40), type: "milestone", done: false },
+  ];
+}
+
+// ─── BREATHING ──────────────────────────────────────────────────────────────
+const BREATHING_EXERCISES = [
+  { id: "coherence", name: "Cohérence cardiaque", icon: "🫁", description: "5s inspiration, 5s expiration. 5 min de sérénité.", duration: 300, steps: [{ action: "Inspire", duration: 5 }, { action: "Expire", duration: 5 }] },
+  { id: "4-7-8", name: "Respiration 4-7-8", icon: "🌙", description: "Parfaite pour s'endormir.", duration: 240, steps: [{ action: "Inspire", duration: 4 }, { action: "Retiens", duration: 7 }, { action: "Expire", duration: 8 }] },
+  { id: "box", name: "Respiration carrée", icon: "⬜", description: "4 temps égaux. Calme et concentration.", duration: 240, steps: [{ action: "Inspire", duration: 4 }, { action: "Retiens", duration: 4 }, { action: "Expire", duration: 4 }, { action: "Retiens", duration: 4 }] },
+  { id: "relaxation", name: "Relaxation profonde", icon: "🧘", description: "Longue expiration pour tout relâcher.", duration: 300, steps: [{ action: "Inspire", duration: 4 }, { action: "Expire", duration: 8 }] },
+];
+
+function createSoundEngine() {
+  let ctx = null;
+  const getCtx = () => { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === "suspended") ctx.resume(); return ctx; };
+  const playChime = (freq = 528, type = "sine", dur = 0.6) => {
+    try {
+      const c = getCtx(), osc = c.createOscillator(), gain = c.createGain(), filt = c.createBiquadFilter();
+      filt.type = "lowpass"; filt.frequency.value = 2000; osc.type = type; osc.frequency.setValueAtTime(freq, c.currentTime);
+      gain.gain.setValueAtTime(0, c.currentTime); gain.gain.linearRampToValueAtTime(0.15, c.currentTime + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+      osc.connect(filt); filt.connect(gain); gain.connect(c.destination); osc.start(c.currentTime); osc.stop(c.currentTime + dur);
+    } catch {}
+  };
+  return {
+    inspire: () => { playChime(396, "sine", 0.8); setTimeout(() => playChime(528, "sine", 0.5), 120); },
+    expire: () => { playChime(528, "sine", 0.8); setTimeout(() => playChime(396, "sine", 0.5), 120); },
+    hold: () => { playChime(440, "triangle", 0.4); },
+    complete: () => { playChime(396, "sine", 0.5); setTimeout(() => playChime(528, "sine", 0.5), 200); setTimeout(() => playChime(639, "sine", 0.8), 400); },
+  };
+}
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+function loadData(key, fb) { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : fb; } catch { return fb; } }
+function saveData(key, d) { try { localStorage.setItem(key, JSON.stringify(d)); } catch {} }
+
+// ─── SVG BIRD & MOUSE ──────────────────────────────────────────────────────
+function BirdAndMouse() {
+  const [t, setT] = useState(0);
+  useEffect(() => { const id = setInterval(() => setT(p => p + 1), 80); return () => clearInterval(id); }, []);
+  const breathe = Math.sin(t * 0.08) * 2, sway = Math.sin(t * 0.05) * 3, heartBeat = 1 + Math.sin(t * 0.2) * 0.15, blink = Math.floor(t % 40) < 2, tailWag = Math.sin(t * 0.15) * 8;
+  return (
+    <svg viewBox="0 0 180 120" width="180" height="120" style={{ display: "block" }}>
+      <ellipse cx="90" cy="110" rx="70" ry="5" fill="rgba(212,160,192,0.08)" />
+      {[0, 1, 2].map(i => { const hx = 85 + Math.sin(t * 0.04 + i * 2.2) * 18, hy = 15 + Math.sin(t * 0.03 + i * 1.5) * 8 - i * 7, hop = 0.4 + Math.sin(t * 0.06 + i) * 0.15; return <text key={i} x={hx} y={hy} fontSize={9 * hop} textAnchor="middle" style={{ opacity: 0.2 + Math.sin(t * 0.05 + i * 1.3) * 0.18 }}>💕</text>; })}
+      {/* BIRD */}
+      <g transform={`translate(55, ${65 + breathe}) rotate(${sway * 0.3}, 0, 0)`}>
+        <ellipse cx="0" cy="10" rx="16" ry="18" fill="#a8d8ea" />
+        <ellipse cx="0" cy="15" rx="10" ry="11" fill="#d4eef7" />
+        <circle cx="0" cy="-8" r="11" fill="#a8d8ea" />
+        <ellipse cx="-7" cy="-5" rx="3.5" ry="2.5" fill="rgba(244,180,180,0.45)" />
+        <ellipse cx="7" cy="-5" rx="3.5" ry="2.5" fill="rgba(244,180,180,0.45)" />
+        {blink ? (<><line x1="-4" y1="-9" x2="-1" y2="-9" stroke="#5a7a8a" strokeWidth="1.3" strokeLinecap="round" /><line x1="1" y1="-9" x2="4" y2="-9" stroke="#5a7a8a" strokeWidth="1.3" strokeLinecap="round" /></>) : (<><circle cx="-3" cy="-9" r="2.2" fill="#3a5a6a" /><circle cx="3" cy="-9" r="2.2" fill="#3a5a6a" /><circle cx="-2.5" cy="-9.7" r="0.7" fill="white" /><circle cx="3.5" cy="-9.7" r="0.7" fill="white" /></>)}
+        <path d="M-2,-5 L0,-2.5 L2,-5" fill="#f4b860" stroke="#e6a040" strokeWidth="0.4" />
+        <ellipse cx="12" cy="4" rx="7" ry="10" fill="#8ec8e0" transform={`rotate(${15 + sway * 2}, 12, 4)`} />
+        <path d={`M-3,-18 Q0,${-22 + breathe * 0.5} 3,-18`} fill="none" stroke="#a8d8ea" strokeWidth="1.8" strokeLinecap="round" />
+        <line x1="-4" y1="28" x2="-6" y2="33" stroke="#e6a040" strokeWidth="1.3" />
+        <line x1="4" y1="28" x2="6" y2="33" stroke="#e6a040" strokeWidth="1.3" />
+      </g>
+      {/* MOUSE */}
+      <g transform={`translate(125, ${67 + breathe * 0.8}) rotate(${-sway * 0.3}, 0, 0)`}>
+        <ellipse cx="0" cy="12" rx="12" ry="16" fill="#d4b8c8" />
+        <ellipse cx="0" cy="16" rx="8" ry="10" fill="#f0e0ea" />
+        <circle cx="0" cy="-4" r="12" fill="#d4b8c8" />
+        <ellipse cx="-9" cy="-14" rx="7" ry="9" fill="#d4b8c8" transform="rotate(-15, -9, -14)" />
+        <ellipse cx="-9" cy="-14" rx="4.5" ry="6" fill="#f0c0d4" transform="rotate(-15, -9, -14)" />
+        <ellipse cx="9" cy="-14" rx="7" ry="9" fill="#d4b8c8" transform="rotate(15, 9, -14)" />
+        <ellipse cx="9" cy="-14" rx="4.5" ry="6" fill="#f0c0d4" transform="rotate(15, 9, -14)" />
+        <ellipse cx="-7" cy="-1" rx="3" ry="2.2" fill="rgba(244,170,170,0.4)" />
+        <ellipse cx="7" cy="-1" rx="3" ry="2.2" fill="rgba(244,170,170,0.4)" />
+        {blink ? (<><line x1="-5" y1="-5" x2="-2" y2="-5" stroke="#6a4a5a" strokeWidth="1.3" strokeLinecap="round" /><line x1="2" y1="-5" x2="5" y2="-5" stroke="#6a4a5a" strokeWidth="1.3" strokeLinecap="round" /></>) : (<><circle cx="-3.5" cy="-5" r="2" fill="#4a3040" /><circle cx="3.5" cy="-5" r="2" fill="#4a3040" /><circle cx="-4.2" cy="-5.7" r="0.6" fill="white" /><circle cx="2.8" cy="-5.7" r="0.6" fill="white" /></>)}
+        <circle cx="0" cy="-1" r="1.8" fill="#c08898" />
+        <line x1="-12" y1="-2.5" x2="-4" y2="-1.5" stroke="#b8a0a8" strokeWidth="0.4" />
+        <line x1="-12" y1="-0.5" x2="-4" y2="-0.5" stroke="#b8a0a8" strokeWidth="0.4" />
+        <line x1="12" y1="-2.5" x2="4" y2="-1.5" stroke="#b8a0a8" strokeWidth="0.4" />
+        <line x1="12" y1="-0.5" x2="4" y2="-0.5" stroke="#b8a0a8" strokeWidth="0.4" />
+        <ellipse cx="-10" cy="7" rx="4.5" ry="7" fill="#c8a8b8" transform={`rotate(${-20 + sway * 2}, -10, 7)`} />
+        <path d={`M7,25 Q18,${18 + tailWag} 22,${27 + tailWag * 0.5}`} fill="none" stroke="#c8a8b8" strokeWidth="2.2" strokeLinecap="round" />
+        <ellipse cx="-4" cy="29" rx="3.5" ry="2.2" fill="#c8a8b8" />
+        <ellipse cx="4" cy="29" rx="3.5" ry="2.2" fill="#c8a8b8" />
+      </g>
+      <g transform={`translate(90, ${52 + breathe * 0.5}) scale(${heartBeat})`}><text textAnchor="middle" fontSize="12" y="4">❤️</text></g>
+    </svg>
+  );
+}
+
+function ProgressRing({ weeks }) {
+  const pct = Math.min((weeks / 41) * 100, 100), r = 50, circ = 2 * Math.PI * r, offset = circ - (pct / 100) * circ;
+  return (
+    <svg width="120" height="120" viewBox="0 0 112 112" style={{ filter: "drop-shadow(0 2px 6px rgba(183,130,163,0.12))" }}>
+      <circle cx="56" cy="56" r={r} fill="none" stroke="#f3e8f0" strokeWidth="7" />
+      <circle cx="56" cy="56" r={r} fill="none" stroke="url(#pg)" strokeWidth="7" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} transform="rotate(-90 56 56)" style={{ transition: "stroke-dashoffset 1s ease" }} />
+      <defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#d4a0c0" /><stop offset="100%" stopColor="#b782a3" /></linearGradient></defs>
+      <text x="56" y="50" textAnchor="middle" style={{ fontSize: "20px", fontWeight: 700, fill: "#7a5a6e" }}>{weeks}</text>
+      <text x="56" y="66" textAnchor="middle" style={{ fontSize: "10px", fill: "#a88b9c", fontWeight: 500 }}>SA</text>
+    </svg>
+  );
+}
+
+// ─── FOOD SEARCH ────────────────────────────────────────────────────────────
+function FoodSearch({ compact }) {
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(!compact);
+  const results = useMemo(() => {
+    if (query.length < 2) return [];
+    const q = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return FOODS.filter(f => { const n = f.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); return n.includes(q) || q.includes(n); }).slice(0, 6);
+  }, [query]);
+  const getIcon = s => s === true ? "✅" : s === "caution" ? "⚠️" : "❌";
+  const getBg = s => s === true ? "rgba(76,175,80,0.08)" : s === "caution" ? "rgba(255,152,0,0.08)" : "rgba(229,57,53,0.08)";
+  const getCol = s => s === true ? "#4caf50" : s === "caution" ? "#ff9800" : "#e53935";
+  if (compact && !expanded) {
+    return (<button onClick={() => setExpanded(true)} style={{ width: "100%", padding: "14px 18px", borderRadius: 16, border: "1px solid rgba(212,160,192,0.12)", background: "white", boxShadow: "0 2px 12px rgba(183,130,163,0.06)", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 22 }}>🍽️</span><div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>Puis-je manger… ?</div><div style={{ fontSize: 12, color: "#a88b9c" }}>Tape un aliment pour vérifier</div></div></button>);
+  }
+  return (
+    <div style={{ background: "white", borderRadius: 18, padding: "14px 16px", border: "1px solid rgba(212,160,192,0.12)", boxShadow: "0 2px 12px rgba(183,130,163,0.06)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>🍽️ Puis-je manger… ?</div>{compact && <button onClick={() => { setExpanded(false); setQuery(""); }} style={{ background: "none", border: "none", color: "#a88b9c", fontSize: 16, cursor: "pointer" }}>✕</button>}</div>
+      <div style={{ position: "relative" }}><input placeholder="Ex: saumon, brie, café…" value={query} onChange={e => setQuery(e.target.value)} style={{ width: "100%", padding: "11px 14px 11px 36px", borderRadius: 12, border: "1.5px solid #e8d5e0", fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} /><span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 15 }}>🔍</span></div>
+      {results.map((f, i) => (<div key={i} style={{ marginTop: 8, padding: "10px 12px", borderRadius: 12, background: getBg(f.safe), border: `1px solid ${getCol(f.safe)}15`, display: "flex", gap: 10, alignItems: "flex-start" }}><span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{getIcon(f.safe)}</span><div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e", textTransform: "capitalize" }}>{f.name}</div><div style={{ fontSize: 12, color: "#7a5a6e", marginTop: 2, lineHeight: 1.4 }}>{f.note}</div></div></div>))}
+      {query.length >= 2 && results.length === 0 && <div style={{ textAlign: "center", padding: "14px 0", color: "#a88b9c", fontSize: 13 }}>Pas trouvé… essaie un autre mot.</div>}
+    </div>
+  );
+}
+
+// ─── BREATHING PLAYER ───────────────────────────────────────────────────────
+function BreathingPlayer({ exercise, onClose }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [stepElapsed, setStepElapsed] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const intervalRef = useRef(null);
+  const soundRef = useRef(null);
+  const prevActionRef = useRef("");
+  if (!soundRef.current) soundRef.current = createSoundEngine();
+  const currentStep = exercise.steps[stepIndex];
+  useEffect(() => {
+    if (!isPlaying || !soundEnabled) return;
+    const act = currentStep.action;
+    if (act !== prevActionRef.current || stepElapsed === 0) {
+      if (act === "Inspire") soundRef.current.inspire(); else if (act === "Expire") soundRef.current.expire(); else soundRef.current.hold();
+      prevActionRef.current = act;
+    }
+  }, [stepIndex, stepElapsed, isPlaying, soundEnabled, currentStep]);
+  useEffect(() => {
+    if (!isPlaying) { clearInterval(intervalRef.current); return; }
+    intervalRef.current = setInterval(() => {
+      setElapsed(e => { if (e + 1 >= exercise.duration) { setIsPlaying(false); if (soundEnabled && soundRef.current) soundRef.current.complete(); return exercise.duration; } return e + 1; });
+      setStepElapsed(se => { if (se + 1 >= exercise.steps[stepIndex].duration) { setStepIndex(si => (si + 1) % exercise.steps.length); return 0; } return se + 1; });
+    }, 1000);
+    return () => clearInterval(intervalRef.current);
+  }, [isPlaying, stepIndex, exercise, soundEnabled]);
+  const reset = () => { setIsPlaying(false); setElapsed(0); setStepIndex(0); setStepElapsed(0); clearInterval(intervalRef.current); };
+  const remaining = exercise.duration - elapsed, mins = Math.floor(remaining / 60), secs = remaining % 60;
+  const stepProgress = stepElapsed / currentStep.duration;
+  const isInhale = currentStep.action === "Inspire", isHold = currentStep.action === "Retiens";
+  const bubbleScale = isInhale ? 0.6 + 0.4 * stepProgress : isHold ? 1 : 1 - 0.4 * stepProgress;
+  const actionColor = isInhale ? "#a8d8ea" : isHold ? "#d4a0c0" : "#c8b8d8";
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "linear-gradient(145deg, #faf5f8 0%, #f0e4ed 50%, #e8d5e0 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", fontSize: 28, color: "#a88b9c", cursor: "pointer", padding: 8 }}>✕</button>
+      <button onClick={() => setSoundEnabled(!soundEnabled)} style={{ position: "absolute", top: 16, left: 16, background: "rgba(183,130,163,0.1)", border: "1px solid rgba(183,130,163,0.2)", borderRadius: 12, padding: "6px 12px", fontSize: 14, color: "#7a5a6e", cursor: "pointer" }}>{soundEnabled ? "🔔" : "🔇"}</button>
+      <div style={{ fontSize: 14, color: "#a88b9c", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>{exercise.icon} {exercise.name}</div>
+      <div style={{ width: 200, height: 200, borderRadius: "50%", margin: "32px 0", background: `radial-gradient(circle, ${actionColor}44 0%, ${actionColor}22 100%)`, border: `2px solid ${actionColor}66`, display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${bubbleScale})`, transition: "transform 1s ease-in-out, background 0.5s ease" }}>
+        <div style={{ textAlign: "center" }}><div style={{ fontSize: 28, fontWeight: 700, color: "#7a5a6e" }}>{currentStep.action}</div><div style={{ fontSize: 40, fontWeight: 300, color: "#b782a3", marginTop: 4 }}>{currentStep.duration - stepElapsed}</div></div>
+      </div>
+      <div style={{ fontSize: 18, color: "#7a5a6e", fontWeight: 600, marginBottom: 32 }}>{mins}:{secs.toString().padStart(2, "0")}</div>
+      <div style={{ display: "flex", gap: 16 }}>
+        <button onClick={() => { if (!isPlaying && elapsed === 0 && soundEnabled) soundRef.current?.inspire(); setIsPlaying(!isPlaying); }} style={{ background: isPlaying ? "rgba(183,130,163,0.15)" : "linear-gradient(135deg, #d4a0c0, #b782a3)", color: isPlaying ? "#7a5a6e" : "white", border: isPlaying ? "2px solid #d4a0c0" : "none", borderRadius: 50, padding: "14px 40px", fontSize: 16, fontWeight: 600, cursor: "pointer" }}>{isPlaying ? "Pause" : elapsed > 0 ? "Reprendre" : "Commencer"}</button>
+        {elapsed > 0 && <button onClick={reset} style={{ background: "rgba(183,130,163,0.1)", color: "#a88b9c", border: "1.5px solid rgba(183,130,163,0.3)", borderRadius: 50, padding: "14px 24px", fontSize: 16, cursor: "pointer" }}>↺</button>}
+      </div>
+      {elapsed >= exercise.duration && (<div style={{ marginTop: 32, textAlign: "center", padding: "20px 28px", background: "rgba(212,160,192,0.15)", borderRadius: 16 }}><div style={{ fontSize: 24, marginBottom: 8 }}>🎉</div><div style={{ fontSize: 16, color: "#7a5a6e", fontWeight: 600 }}>Bravo !</div><div style={{ fontSize: 14, color: "#a88b9c", marginTop: 4 }}>Séance terminée. Tu as pris soin de toi et de bébé.</div></div>)}
+    </div>
+  );
+}
+
+// ─── CALENDAR VIEW ──────────────────────────────────────────────────────────
+function CalendarView({ events, setEvents }) {
+  const [viewMonth, setViewMonth] = useState(() => ({ year: new Date().getFullYear(), month: new Date().getMonth() }));
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ title: "", time: "", type: "rdv", note: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  const dayNames = ["L","M","M","J","V","S","D"];
+  const { year, month } = viewMonth;
+  let startDay = new Date(year, month, 1).getDay() - 1; if (startDay < 0) startDay = 6;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date().toISOString().split("T")[0];
+  const cells = []; for (let i = 0; i < startDay; i++) cells.push(null); for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const dateStr = d => `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const eventsForDate = d => events.filter(e => e.date === dateStr(d));
+  const selectedEvents = selectedDate ? events.filter(e => e.date === selectedDate).sort((a, b) => (a.time || "").localeCompare(b.time || "")) : [];
+  const prevMonth = () => setViewMonth(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 });
+  const nextMonth = () => setViewMonth(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 });
+  const toggleDone = id => setEvents(ev => ev.map(e => e.id === id ? { ...e, done: !e.done } : e));
+  const removeEvent = id => { setEvents(ev => ev.filter(e => e.id !== id)); setEditingId(null); };
+  const addEvent = () => { if (!addForm.title || !selectedDate) return; setEvents(ev => [...ev, { id: "e" + Date.now(), title: addForm.title, date: selectedDate, time: addForm.time || undefined, type: addForm.type, done: false, note: addForm.note || undefined }].sort((a, b) => a.date.localeCompare(b.date))); setAddForm({ title: "", time: "", type: "rdv", note: "" }); setShowAdd(false); };
+  const startEdit = ev => { setEditingId(ev.id); setEditForm({ title: ev.title, date: ev.date, time: ev.time || "", note: ev.note || "", type: ev.type }); };
+  const saveEdit = () => { setEvents(ev => ev.map(e => e.id === editingId ? { ...e, title: editForm.title, date: editForm.date, time: editForm.time || undefined, note: editForm.note || undefined, type: editForm.type } : e).sort((a, b) => a.date.localeCompare(b.date))); setEditingId(null); };
+  const typeColor = t => t === "rdv" ? "#b782a3" : t === "task" ? "#8ec8e0" : "#f4b860";
+  const inpS = { width: "100%", padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e8d5e0", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
+  return (
+    <div>
+      <div style={{ padding: "28px 20px 12px" }}><div style={{ fontSize: 22, fontWeight: 700, color: "#7a5a6e" }}>Calendrier</div><div style={{ fontSize: 14, color: "#a88b9c", marginTop: 4 }}>Tes rendez-vous & démarches</div></div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 20px 12px" }}>
+        <button onClick={prevMonth} style={{ background: "none", border: "none", fontSize: 20, color: "#b782a3", cursor: "pointer", padding: 8 }}>‹</button>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#7a5a6e" }}>{monthNames[month]} {year}</div>
+        <button onClick={nextMonth} style={{ background: "none", border: "none", fontSize: 20, color: "#b782a3", cursor: "pointer", padding: 8 }}>›</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: "0 12px", marginBottom: 6 }}>{dayNames.map((d, i) => <div key={i} style={{ textAlign: "center", fontSize: 11, fontWeight: 700, color: "#b782a3", padding: "4px 0" }}>{d}</div>)}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: "0 12px", gap: 3 }}>
+        {cells.map((d, i) => { if (d === null) return <div key={`e${i}`} />; const ds = dateStr(d), evts = eventsForDate(d), isToday = ds === today, isSel = ds === selectedDate; return (
+          <button key={i} onClick={() => { setSelectedDate(ds === selectedDate ? null : ds); setEditingId(null); setShowAdd(false); }} style={{ background: isSel ? "linear-gradient(135deg, #d4a0c0, #b782a3)" : isToday ? "rgba(212,160,192,0.15)" : "transparent", color: isSel ? "white" : "#7a5a6e", border: "none", borderRadius: 12, padding: "8px 2px", cursor: "pointer", fontWeight: isToday || isSel ? 700 : 500, fontSize: 14, minHeight: 42, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            {d}{evts.length > 0 && <div style={{ display: "flex", gap: 2, marginTop: 3 }}>{evts.slice(0, 3).map((e, j) => <div key={j} style={{ width: 5, height: 5, borderRadius: "50%", background: isSel ? "rgba(255,255,255,0.8)" : typeColor(e.type) }} />)}</div>}
+          </button>); })}
+      </div>
+      {selectedDate && (
+        <div style={{ padding: "16px 16px 0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>{new Date(selectedDate + "T12:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div>
+            <button onClick={() => { setShowAdd(true); setEditingId(null); }} style={{ background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", border: "none", borderRadius: 10, width: 32, height: 32, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+          </div>
+          {showAdd && (<div style={{ background: "white", borderRadius: 16, padding: 14, marginBottom: 12, border: "2px solid rgba(212,160,192,0.3)" }}>
+            <input placeholder="Titre" value={addForm.title} onChange={e => setAddForm({ ...addForm, title: e.target.value })} style={{ ...inpS, marginBottom: 8 }} />
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}><input type="time" value={addForm.time} onChange={e => setAddForm({ ...addForm, time: e.target.value })} style={{ ...inpS, flex: 1 }} /><select value={addForm.type} onChange={e => setAddForm({ ...addForm, type: e.target.value })} style={{ ...inpS, width: "auto" }}><option value="rdv">📋 RDV</option><option value="task">✅ Tâche</option><option value="milestone">⭐ Étape</option></select></div>
+            <input placeholder="Note (optionnel)" value={addForm.note} onChange={e => setAddForm({ ...addForm, note: e.target.value })} style={{ ...inpS, marginBottom: 10 }} />
+            <div style={{ display: "flex", gap: 8 }}><button onClick={() => setShowAdd(false)} style={{ flex: 1, padding: 10, borderRadius: 10, border: "1.5px solid #e8d5e0", background: "white", color: "#a88b9c", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Annuler</button><button onClick={addEvent} style={{ flex: 1, padding: 10, borderRadius: 10, border: "none", background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Ajouter</button></div>
+          </div>)}
+          {selectedEvents.length === 0 && !showAdd && <div style={{ textAlign: "center", padding: "20px 0", color: "#c4adb8", fontSize: 14 }}>Rien de prévu. Appuie + pour ajouter.</div>}
+          {selectedEvents.map(ev => editingId === ev.id ? (
+            <div key={ev.id} style={{ background: "white", borderRadius: 14, padding: 14, marginBottom: 10, border: "2px solid rgba(183,130,163,0.3)", boxShadow: "0 2px 16px rgba(183,130,163,0.1)" }}>
+              <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={{ ...inpS, marginBottom: 8, fontWeight: 600 }} />
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}><input type="date" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} style={{ ...inpS, flex: 1 }} /><input type="time" value={editForm.time} onChange={e => setEditForm({ ...editForm, time: e.target.value })} style={{ ...inpS, flex: 1 }} /></div>
+              <input placeholder="Note" value={editForm.note} onChange={e => setEditForm({ ...editForm, note: e.target.value })} style={{ ...inpS, marginBottom: 10 }} />
+              <div style={{ display: "flex", gap: 8 }}><button onClick={() => removeEvent(ev.id)} style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #e5393533", background: "rgba(229,57,53,0.06)", color: "#e53935", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Supprimer</button><div style={{ flex: 1 }} /><button onClick={() => setEditingId(null)} style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #e8d5e0", background: "white", color: "#a88b9c", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Annuler</button><button onClick={saveEdit} style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>OK</button></div>
+            </div>
+          ) : (
+            <div key={ev.id} onClick={() => startEdit(ev)} style={{ background: "white", borderRadius: 14, padding: "14px 16px", marginBottom: 10, borderLeft: `4px solid ${typeColor(ev.type)}`, boxShadow: "0 1px 8px rgba(183,130,163,0.06)", display: "flex", gap: 12, alignItems: "center", opacity: ev.done ? 0.55 : 1, cursor: "pointer" }}>
+              {ev.type === "task" && <button onClick={e => { e.stopPropagation(); toggleDone(ev.id); }} style={{ width: 24, height: 24, borderRadius: 7, flexShrink: 0, cursor: "pointer", border: ev.done ? "none" : "2px solid #8ec8e0", background: ev.done ? "#8ec8e0" : "white", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 12, fontWeight: 700 }}>{ev.done ? "✓" : ""}</button>}
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 600, color: "#7a5a6e", textDecoration: ev.done ? "line-through" : "none" }}>{ev.title}</div>{ev.time && <div style={{ fontSize: 12, color: "#a88b9c", marginTop: 2 }}>🕐 {ev.time}</div>}{ev.note && <div style={{ fontSize: 12, color: "#b782a3", marginTop: 2, fontStyle: "italic" }}>{ev.note}</div>}</div>
+              <span style={{ color: "#d4a0c0", fontSize: 14, flexShrink: 0 }}>✏️</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MAIN APP ───────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState("home");
+  const [events, setEvents] = useState(() => loadData("bebe-events-v3", generateDefaultEvents()));
+  const [breathingExercise, setBreathingExercise] = useState(null);
+  const [quoteIndex, setQuoteIndex] = useState(() => getWeeksPregnancy().totalDays % DAILY_QUOTES.length);
+  useEffect(() => saveData("bebe-events-v3", events), [events]);
+  const { saWeeks, saDays, sgWeeks, sgDays } = getWeeksPregnancy();
+  const quote = DAILY_QUOTES[quoteIndex];
+  const shuffleQuote = () => { let n; do { n = Math.floor(Math.random() * DAILY_QUOTES.length); } while (n === quoteIndex && DAILY_QUOTES.length > 1); setQuoteIndex(n); };
+  const babyInfo = getBabyInfo(saWeeks);
+  const today = new Date().toISOString().split("T")[0];
+  const nextEvent = events.find(e => e.date >= today && !e.done);
+
+  const card = { background: "white", borderRadius: 20, padding: "18px 20px", boxShadow: "0 2px 16px rgba(183,130,163,0.08)", margin: "0 16px 14px", border: "1px solid rgba(212,160,192,0.12)" };
+  const nb = p => ({ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: page === p ? "#b782a3" : "#c4adb8", fontSize: 20, padding: "4px 14px" });
+  const nl = p => ({ fontSize: 10, fontWeight: page === p ? 700 : 500, color: page === p ? "#b782a3" : "#c4adb8" });
+
+  const renderHome = () => (
+    <>
+      <div style={{ padding: "24px 16px 0" }}>
+        <div style={{ textAlign: "center", fontSize: 12, color: "#b782a3", fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>Mon suivi de grossesse</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}><ProgressRing weeks={saWeeks} /><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e", marginTop: 6 }}>{saWeeks} SA + {saDays}j</div><div style={{ fontSize: 12, color: "#a88b9c" }}>({sgWeeks} SG + {sgDays}j)</div></div>
+          <BirdAndMouse />
+        </div>
+      </div>
+      <div style={{ ...card, background: "linear-gradient(135deg, rgba(212,160,192,0.1) 0%, rgba(240,228,237,0.4) 100%)", textAlign: "center", position: "relative" }}>
+        <button onClick={shuffleQuote} style={{ position: "absolute", top: 12, right: 14, background: "rgba(183,130,163,0.12)", border: "none", borderRadius: 8, width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#b782a3" }} title="Autre message">🔄</button>
+        <div style={{ fontSize: 11, color: "#b782a3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>💌 Mot du jour</div>
+        <div style={{ fontSize: 15, color: "#7a5a6e", lineHeight: 1.65, fontStyle: "italic", fontWeight: 500, padding: "0 20px" }}>"{quote}"</div>
+      </div>
+      <div style={card}><div style={{ display: "flex", gap: 14, alignItems: "center" }}><div style={{ fontSize: 34, flexShrink: 0 }}>{babyInfo.emoji}</div><div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>Bébé cette semaine — {babyInfo.fruit}</div><div style={{ fontSize: 13, color: "#b782a3", fontWeight: 600, marginTop: 2 }}>~{babyInfo.size}</div><div style={{ fontSize: 13, color: "#7a5a6e", marginTop: 4, lineHeight: 1.5 }}>{babyInfo.dev}</div></div></div></div>
+      <div style={{ ...card, display: "flex", alignItems: "center", gap: 14 }}><div style={{ width: 44, height: 44, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f3e8f0, #e8d5e0)", fontSize: 20, flexShrink: 0 }}>🍼</div><div><div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600 }}>Arrivée prévue de bébé</div><div style={{ fontSize: 15, fontWeight: 700, color: "#7a5a6e" }}>Fin septembre – début octobre 2026</div></div></div>
+      {nextEvent && (<div style={{ ...card, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setPage("calendar")}><div style={{ width: 44, height: 44, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #e8d5f0, #d5c0e0)", fontSize: 20, flexShrink: 0 }}>📅</div><div style={{ flex: 1 }}><div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600 }}>Prochainement</div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>{nextEvent.title}</div><div style={{ fontSize: 13, color: "#a88b9c" }}>{new Date(nextEvent.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}{nextEvent.time ? ` à ${nextEvent.time}` : ""}</div></div><span style={{ color: "#d4a0c0", fontSize: 18 }}>›</span></div>)}
+      <div style={{ margin: "0 16px 14px" }}><FoodSearch compact /></div>
+    </>
+  );
+
+  const renderBreathing = () => (
+    <>
+      <div style={{ padding: "28px 20px 16px" }}><div style={{ fontSize: 22, fontWeight: 700, color: "#7a5a6e" }}>Respiration</div><div style={{ fontSize: 14, color: "#a88b9c", marginTop: 4 }}>Prends un moment pour toi 🧘</div></div>
+      {BREATHING_EXERCISES.map(ex => (<div key={ex.id} style={{ ...card, cursor: "pointer" }} onClick={() => setBreathingExercise(ex)}><div style={{ display: "flex", gap: 14, alignItems: "center" }}><div style={{ width: 50, height: 50, borderRadius: 15, background: "linear-gradient(135deg, #f3e8f0, #e8d5e0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>{ex.icon}</div><div style={{ flex: 1 }}><div style={{ fontSize: 15, fontWeight: 700, color: "#7a5a6e" }}>{ex.name}</div><div style={{ fontSize: 13, color: "#a88b9c", marginTop: 3, lineHeight: 1.4 }}>{ex.description}</div><div style={{ fontSize: 12, color: "#b782a3", marginTop: 4, fontWeight: 600 }}>{Math.floor(ex.duration / 60)} min · 🔔 Sons doux</div></div><span style={{ color: "#d4a0c0", fontSize: 20 }}>›</span></div></div>))}
+      <div style={{ ...card, opacity: 0.7, textAlign: "center" }}><div style={{ fontSize: 28, marginBottom: 8 }}>🎧</div><div style={{ fontSize: 14, fontWeight: 600, color: "#7a5a6e" }}>Tes enregistrements perso</div><div style={{ fontSize: 13, color: "#a88b9c", marginTop: 4 }}>Bientôt — tes méditations audio apparaîtront ici.</div></div>
+    </>
+  );
+
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "linear-gradient(170deg, #fefbfd 0%, #faf5f8 30%, #f5eef3 100%)", fontFamily: "'Nunito', 'Segoe UI', sans-serif", paddingBottom: 90, position: "relative" }}>
+      {breathingExercise && <BreathingPlayer exercise={breathingExercise} onClose={() => setBreathingExercise(null)} />}
+      {page === "home" && renderHome()}
+      {page === "breathe" && renderBreathing()}
+      {page === "calendar" && <CalendarView events={events} setEvents={setEvents} />}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(212,160,192,0.15)", display: "flex", justifyContent: "space-around", padding: "8px 0 16px", maxWidth: 480, margin: "0 auto", zIndex: 100 }}>
+        <button style={nb("home")} onClick={() => setPage("home")}><span>🏠</span><span style={nl("home")}>Accueil</span></button>
+        <button style={nb("breathe")} onClick={() => setPage("breathe")}><span>🧘</span><span style={nl("breathe")}>Respirer</span></button>
+        <button style={nb("calendar")} onClick={() => setPage("calendar")}><span>📅</span><span style={nl("calendar")}>Calendrier</span></button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
