@@ -42,7 +42,6 @@ function getWeeksPregnancy() {
 
 // ─── PERSONAL QUOTES ────────────────────────────────────────────────────────
 const DAILY_QUOTES = [
-  "Tu n'es pas 'ronde', tu es juste en format panoramique. Et j'adore le paysage.",
   "Deux cœurs battent en toi, et le mien bat pour toi.",
   "Tu es le plus bel abri que notre enfant puisse avoir.",
   "Merci d'exister.",
@@ -506,6 +505,70 @@ function CalendarView({ events, setEvents }) {
   );
 }
 
+// ─── UPCOMING VIEW ──────────────────────────────────────────────────────────
+function UpcomingView({ events, setEvents, onBack }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+  const upcoming = events.filter(e => !e.done).sort((a, b) => a.date.localeCompare(b.date));
+  const typeColor = t => t === "rdv" ? "#b782a3" : t === "task" ? "#8ec8e0" : "#f4b860";
+  const typeIcon = t => t === "rdv" ? "🏥" : t === "task" ? "✅" : "⭐";
+  const startEdit = ev => { setEditingId(ev.id); setEditDate(ev.date); setEditTime(ev.time || ""); };
+  const saveDate = () => {
+    if (!editDate) return;
+    setEvents(evs => evs.map(e => e.id === editingId ? { ...e, date: editDate, time: editTime || undefined } : e).sort((a, b) => a.date.localeCompare(b.date)));
+    setEditingId(null);
+  };
+  const card = { background: "white", borderRadius: 20, padding: "14px 16px", boxShadow: "0 2px 16px rgba(183,130,163,0.08)", margin: "0 16px 10px", border: "1px solid rgba(212,160,192,0.12)" };
+  const inpS = { width: "100%", padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e8d5e0", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
+  return (
+    <div>
+      <div style={{ padding: "28px 20px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 22, color: "#b782a3", cursor: "pointer", padding: "4px 8px 4px 0", lineHeight: 1 }}>←</button>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#7a5a6e" }}>À venir</div>
+          <div style={{ fontSize: 13, color: "#a88b9c", marginTop: 2 }}>Appuie sur une étape pour noter la date exacte</div>
+        </div>
+      </div>
+      {upcoming.map(ev => (
+        <div key={ev.id} style={{ ...card, cursor: "pointer", borderLeft: `4px solid ${typeColor(ev.type)}` }} onClick={() => editingId === ev.id ? setEditingId(null) : startEdit(ev)}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ fontSize: 22, flexShrink: 0 }}>{typeIcon(ev.type)}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>{ev.title}</div>
+              <div style={{ fontSize: 12, color: "#a88b9c", marginTop: 2 }}>
+                📅 {new Date(ev.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}{ev.time ? ` à ${ev.time}` : ""}
+              </div>
+              {ev.note && <div style={{ fontSize: 12, color: "#b782a3", marginTop: 2, fontStyle: "italic" }}>{ev.note}</div>}
+            </div>
+            <span style={{ color: "#d4a0c0", fontSize: 16, display: "inline-block", transition: "transform 0.2s", transform: editingId === ev.id ? "rotate(90deg)" : "none" }}>›</span>
+          </div>
+          {editingId === ev.id && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(212,160,192,0.2)" }} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600, marginBottom: 8 }}>Date exacte :</div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} style={{ ...inpS, flex: 1 }} />
+                <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={{ ...inpS, flex: 1 }} />
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1.5px solid #e8d5e0", background: "white", color: "#a88b9c", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Annuler</button>
+                <button onClick={saveDate} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Enregistrer ✓</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+      {upcoming.length === 0 && (
+        <div style={{ textAlign: "center", padding: "60px 20px", color: "#c4adb8" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Tout est fait !</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 function App() {
   const [page, setPage] = useState("home");
@@ -540,7 +603,7 @@ function App() {
       </div>
       <div style={card}><div style={{ display: "flex", gap: 14, alignItems: "center" }}><div style={{ fontSize: 34, flexShrink: 0 }}>{babyInfo.emoji}</div><div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>Bébé cette semaine — {babyInfo.fruit}</div><div style={{ fontSize: 13, color: "#b782a3", fontWeight: 600, marginTop: 2 }}>~{babyInfo.size}</div><div style={{ fontSize: 13, color: "#7a5a6e", marginTop: 4, lineHeight: 1.5 }}>{babyInfo.dev}</div></div></div></div>
       <div style={{ ...card, display: "flex", alignItems: "center", gap: 14 }}><div style={{ width: 44, height: 44, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f3e8f0, #e8d5e0)", fontSize: 20, flexShrink: 0 }}>🍼</div><div><div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600 }}>Arrivée prévue de bébé</div><div style={{ fontSize: 15, fontWeight: 700, color: "#7a5a6e" }}>Fin septembre – début octobre 2026</div></div></div>
-      {nextEvent && (<div style={{ ...card, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setPage("calendar")}><div style={{ width: 44, height: 44, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #e8d5f0, #d5c0e0)", fontSize: 20, flexShrink: 0 }}>📅</div><div style={{ flex: 1 }}><div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600 }}>Prochainement</div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>{nextEvent.title}</div><div style={{ fontSize: 13, color: "#a88b9c" }}>{new Date(nextEvent.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}{nextEvent.time ? ` à ${nextEvent.time}` : ""}</div></div><span style={{ color: "#d4a0c0", fontSize: 18 }}>›</span></div>)}
+      {nextEvent && (<div style={{ ...card, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setPage("upcoming")}><div style={{ width: 44, height: 44, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #e8d5f0, #d5c0e0)", fontSize: 20, flexShrink: 0 }}>📅</div><div style={{ flex: 1 }}><div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600 }}>Prochainement</div><div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>{nextEvent.title}</div><div style={{ fontSize: 13, color: "#a88b9c" }}>{new Date(nextEvent.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}{nextEvent.time ? ` à ${nextEvent.time}` : ""}</div></div><span style={{ color: "#d4a0c0", fontSize: 18 }}>›</span></div>)}
       <div style={{ margin: "0 16px 14px" }}><FoodSearch compact /></div>
     </>
   );
@@ -558,6 +621,7 @@ function App() {
       {breathingExercise && <BreathingPlayer exercise={breathingExercise} onClose={() => setBreathingExercise(null)} />}
       {page === "home" && renderHome()}
       {page === "breathe" && renderBreathing()}
+      {page === "upcoming" && <UpcomingView events={events} setEvents={setEvents} onBack={() => setPage("home")} />}
       {page === "calendar" && <CalendarView events={events} setEvents={setEvents} />}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(212,160,192,0.15)", display: "flex", justifyContent: "space-around", padding: "8px 0 16px", maxWidth: 480, margin: "0 auto", zIndex: 100 }}>
         <button style={nb("home")} onClick={() => setPage("home")}><span>🏠</span><span style={nl("home")}>Accueil</span></button>
