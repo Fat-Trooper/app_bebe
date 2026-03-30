@@ -42,14 +42,61 @@ function getWeeksPregnancy() {
 
 // ─── PERSONAL QUOTES ────────────────────────────────────────────────────────
 const DAILY_QUOTES = [
-  "Tu n'es pas 'ronde', tu es juste en format panoramique. Et j'adore le paysage.",
-  "Tu ne prends pas du poids, tu prends de la place dans mon cœur. Et un peu sur le canapé aussi.", 
-  "J'ai calculé : ton périmètre abdominal est proportionnel à mon bonheur. Ça commence à faire beaucoup de bonheur !", 
-  "Tu es comme une mise à jour : tu prends de la place, c'est long à charger, mais le résultat va être incroyable.",
-  "Si tu te sens comme une baleine, n'oublie pas que c'est l'animal le plus majestueux de l'océan. Et le plus câlin.", 
-  "J’aime déjà ta future démarche. Un mélange entre une reine et un pingouin très sexy.",
-  "Tu es mon petit radiateur humain. Pratique, écologique, et ça sent bon le talc",
-  "Si tu tombes sur le dos, ne panique pas, je te remettrai sur tes pattes.",
+  "Deux cœurs battent en toi, et le mien bat pour toi.",
+  "Tu es le plus bel abri que notre enfant puisse avoir.",
+  "Merci d'exister.",
+  "Pour le prénom, Pedro. Tu aimes ?",
+  "J'aime te voir grossir, ça fait toujours plus de toi.",
+  "Entre toi et moi l'écart se creuse.",
+  "Après la pluie, l'arc-en-ciel. Toujours.",
+  "Je suis jaloux de Moshe. Parce qu'il est tjr avec toi… pas pour son prénom.",
+  "Il est où ton joli petit sourire ? Je t'aime.",
+  "Regarde le ciel, il est immense, comme nos possibles.",
+  "J'ai hâte de vieillir avec toi.",
+  "Si tu continues de m'émoustiller comme ça je vais faire un petit frère à Moshe.",
+  "On construit un château, pierre par pierre.",
+  "C'est pas grave si aujourd'hui on en pleure, demain on en rira.",
+  "Je suis à toi, je serai toujours là.",
+  "Bonne journée, mon amour.",
+  "Parfois on ne dirait pas, mais tu pourras toujours compter sur moi.",
+  "Notre futur a un visage, et des cheveux, beaucoup de cheveux.",
+  "Le bonheur s'endort à mes côtés.",
+  "Une souris rose, à qui l'oiseau faisait des proses.",
+  "Le meilleur est à venir, sache-le.",
+  "Laisse-moi porter tes doutes.",
+  "Pas d'avion sans aile, pas d'amour sans elle.",
+  "Tu es ma vie. La meilleure et la plus grosse partie.",
+  "Babe, je viens de réaliser : tu ressembles à un \"b\".",
+  "Si tu lis ceci : ajd massage gratuit.",
+  "T'as déjà entendu parler d'un oiseau amoureux d'une souris ? Moi oui.",
+  "Il a de la chance notre petit de t'avoir comme maman.",
+  "Je compte les coups de pied de bébé. J'en suis à beaucoup.",
+  "Tu es belle enceinte. Tu es belle tout court. Mais enceinte, encore plus.",
+  "Rappel : tu portes quelqu'un. Quelqu'un de nous deux. C'est dingue.",
+  "Si tu as envie de quelque chose à manger, dis-le. Je cours.",
+  "Il sera curieux, rigolo, et têtu. Je me demande de qui il tient ça.",
+  "Tu dors avec trois oreillers et moi j'ai l'angle mort du lit. Je t'aime quand même.",
+  "Chaque nuit que tu dors bien, c'est une victoire. Bravo.",
+  "T'as googlé un truc bizarre sur la grossesse cette nuit ? Pareil.",
+  "Notre fils va découvrir le monde. Et son premier monde, c'est toi.",
+  "Je t'ai vue ce matin et j'ai pensé : j'ai vraiment de la chance.",
+  "Bébé entend déjà nos voix. Bonjour petit, c'est papa.",
+  "Ce ventre rond est la plus belle chose que j'aie jamais vue.",
+  "Tu portes nos deux familles dans ton ventre. Ça fait beaucoup. Merci.",
+  "Si un jour tu doutes : je suis là, j'ai toujours été là.",
+  "Ce soir je te fais couler un bain. Parce que tu le mérites.",
+  "Tu m'as dit que tu avais mal au dos. Je n'ai pas oublié.",
+  "Dans quelques semaines il va crier. Et on sera heureux qu'il crie.",
+  "Je nous imagine dans dix ans. Ça me fait sourire tout seul.",
+  "Une petite souris, un petit oiseau, et bientôt un petit nous.",
+  "L'amour, ça ressemble à toi en ce moment : immense et lumineux.",
+  "Tu peux craquer si t'en as besoin. Je suis là pour ramasser les morceaux.",
+  "Bonne nuit, mon amour. Bonne nuit, bébé.",
+  "Il s'appellera Solly. (Ne montre pas ça à sa mère.)",
+  "Solal c'est beau. Mais Solly c'est mieux. (Débat toujours en cours.)",
+  "Bonjour Solly. Bonjour Solal. On verra.",
+  "Elle dit Solal, je dis Solly. Lui, il s'en fiche pour l'instant.",
+  "Solly ou Solal ? La vraie question de cette grossesse.",
 ];
 
 // ─── FOOD SAFETY DATABASE ───────────────────────────────────────────────────
@@ -277,6 +324,12 @@ function BirdAndMouse() {
   const [t, setT] = useState(0);
   useEffect(() => { const id = setInterval(() => setT(p => p + 1), 80); return () => clearInterval(id); }, []);
   const breathe = Math.sin(t * 0.08) * 2, sway = Math.sin(t * 0.05) * 3, heartBeat = 1 + Math.sin(t * 0.2) * 0.15, blink = Math.floor(t % 40) < 2, tailWag = Math.sin(t * 0.15) * 8;
+  const wingFlutter = sway * 2 + Math.sin(t * 0.35) * 5;
+  const headNod = Math.sin(t * 0.12) * 1.2;
+  const earWiggle = Math.sin(t * 0.18) * 3;
+  const sparkleCycle = t % 240;
+  const sparkleOpacity = sparkleCycle < 8 ? Math.sin((sparkleCycle / 8) * Math.PI) : 0;
+  const sparkleX = Math.floor(t / 240) % 2 === 0 ? 42 : 138;
   return (
     <svg viewBox="0 0 180 120" width="180" height="120" style={{ display: "block" }}>
       <ellipse cx="90" cy="110" rx="70" ry="5" fill="rgba(212,160,192,0.08)" />
@@ -285,12 +338,14 @@ function BirdAndMouse() {
       <g transform={`translate(55, ${65 + breathe}) rotate(${sway * 0.3}, 0, 0)`}>
         <ellipse cx="0" cy="10" rx="16" ry="18" fill="#a8d8ea" />
         <ellipse cx="0" cy="15" rx="10" ry="11" fill="#d4eef7" />
+        <g transform={`translate(0, ${headNod})`}>
         <circle cx="0" cy="-8" r="11" fill="#a8d8ea" />
         <ellipse cx="-7" cy="-5" rx="3.5" ry="2.5" fill="rgba(244,180,180,0.45)" />
         <ellipse cx="7" cy="-5" rx="3.5" ry="2.5" fill="rgba(244,180,180,0.45)" />
         {blink ? (<><line x1="-4" y1="-9" x2="-1" y2="-9" stroke="#5a7a8a" strokeWidth="1.3" strokeLinecap="round" /><line x1="1" y1="-9" x2="4" y2="-9" stroke="#5a7a8a" strokeWidth="1.3" strokeLinecap="round" /></>) : (<><circle cx="-3" cy="-9" r="2.2" fill="#3a5a6a" /><circle cx="3" cy="-9" r="2.2" fill="#3a5a6a" /><circle cx="-2.5" cy="-9.7" r="0.7" fill="white" /><circle cx="3.5" cy="-9.7" r="0.7" fill="white" /></>)}
         <path d="M-2,-5 L0,-2.5 L2,-5" fill="#f4b860" stroke="#e6a040" strokeWidth="0.4" />
-        <ellipse cx="12" cy="4" rx="7" ry="10" fill="#8ec8e0" transform={`rotate(${15 + sway * 2}, 12, 4)`} />
+        </g>
+        <ellipse cx="12" cy="4" rx="7" ry="10" fill="#8ec8e0" transform={`rotate(${15 + wingFlutter}, 12, 4)`} />
         <path d={`M-3,-18 Q0,${-22 + breathe * 0.5} 3,-18`} fill="none" stroke="#a8d8ea" strokeWidth="1.8" strokeLinecap="round" />
         <line x1="-4" y1="28" x2="-6" y2="33" stroke="#e6a040" strokeWidth="1.3" />
         <line x1="4" y1="28" x2="6" y2="33" stroke="#e6a040" strokeWidth="1.3" />
@@ -300,10 +355,10 @@ function BirdAndMouse() {
         <ellipse cx="0" cy="12" rx="12" ry="16" fill="#d4b8c8" />
         <ellipse cx="0" cy="16" rx="8" ry="10" fill="#f0e0ea" />
         <circle cx="0" cy="-4" r="12" fill="#d4b8c8" />
-        <ellipse cx="-9" cy="-14" rx="7" ry="9" fill="#d4b8c8" transform="rotate(-15, -9, -14)" />
-        <ellipse cx="-9" cy="-14" rx="4.5" ry="6" fill="#f0c0d4" transform="rotate(-15, -9, -14)" />
-        <ellipse cx="9" cy="-14" rx="7" ry="9" fill="#d4b8c8" transform="rotate(15, 9, -14)" />
-        <ellipse cx="9" cy="-14" rx="4.5" ry="6" fill="#f0c0d4" transform="rotate(15, 9, -14)" />
+        <ellipse cx="-9" cy="-14" rx="7" ry="9" fill="#d4b8c8" transform={`rotate(${-15 + earWiggle}, -9, -14)`} />
+        <ellipse cx="-9" cy="-14" rx="4.5" ry="6" fill="#f0c0d4" transform={`rotate(${-15 + earWiggle}, -9, -14)`} />
+        <ellipse cx="9" cy="-14" rx="7" ry="9" fill="#d4b8c8" transform={`rotate(${15 - earWiggle}, 9, -14)`} />
+        <ellipse cx="9" cy="-14" rx="4.5" ry="6" fill="#f0c0d4" transform={`rotate(${15 - earWiggle}, 9, -14)`} />
         <ellipse cx="-7" cy="-1" rx="3" ry="2.2" fill="rgba(244,170,170,0.4)" />
         <ellipse cx="7" cy="-1" rx="3" ry="2.2" fill="rgba(244,170,170,0.4)" />
         {blink ? (<><line x1="-5" y1="-5" x2="-2" y2="-5" stroke="#6a4a5a" strokeWidth="1.3" strokeLinecap="round" /><line x1="2" y1="-5" x2="5" y2="-5" stroke="#6a4a5a" strokeWidth="1.3" strokeLinecap="round" /></>) : (<><circle cx="-3.5" cy="-5" r="2" fill="#4a3040" /><circle cx="3.5" cy="-5" r="2" fill="#4a3040" /><circle cx="-4.2" cy="-5.7" r="0.6" fill="white" /><circle cx="2.8" cy="-5.7" r="0.6" fill="white" /></>)}
@@ -318,6 +373,7 @@ function BirdAndMouse() {
         <ellipse cx="4" cy="29" rx="3.5" ry="2.2" fill="#c8a8b8" />
       </g>
       <g transform={`translate(90, ${52 + breathe * 0.5}) scale(${heartBeat})`}><text textAnchor="middle" fontSize="12" y="4">❤️</text></g>
+      <text x={sparkleX} y="28" fontSize="10" textAnchor="middle" style={{ opacity: sparkleOpacity }}>✨</text>
     </svg>
   );
 }
@@ -425,7 +481,7 @@ function CalendarView({ events, setEvents }) {
   const { year, month } = viewMonth;
   let startDay = new Date(year, month, 1).getDay() - 1; if (startDay < 0) startDay = 6;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = new Date().toISOString().split("T")[0];
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` })();
   const cells = []; for (let i = 0; i < startDay; i++) cells.push(null); for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   const dateStr = d => `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   const eventsForDate = d => events.filter(e => e.date === dateStr(d));
@@ -492,7 +548,7 @@ function UpcomingView({ events, setEvents, onBack }) {
   const [editingId, setEditingId] = useState(null);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
-  const today = new Date().toISOString().split("T")[0];
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` })();
   const upcoming = events.filter(e => !e.done).sort((a, b) => a.date.localeCompare(b.date));
   const typeColor = t => t === "rdv" ? "#b782a3" : t === "task" ? "#8ec8e0" : "#f4b860";
   const typeIcon = t => t === "rdv" ? "🏥" : t === "task" ? "✅" : "⭐";
@@ -562,7 +618,7 @@ function App() {
   const quote = DAILY_QUOTES[quoteIndex];
   const shuffleQuote = () => { let n; do { n = Math.floor(Math.random() * DAILY_QUOTES.length); } while (n === quoteIndex && DAILY_QUOTES.length > 1); setQuoteIndex(n); };
   const babyInfo = getBabyInfo(saWeeks);
-  const today = new Date().toISOString().split("T")[0];
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` })();
   const nextEvent = events.find(e => e.date >= today && !e.done);
 
   const card = { background: "white", borderRadius: 20, padding: "18px 20px", boxShadow: "0 2px 16px rgba(183,130,163,0.08)", margin: "0 16px 14px", border: "1px solid rgba(212,160,192,0.12)" };
