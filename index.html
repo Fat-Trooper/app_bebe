@@ -295,33 +295,6 @@ function generateDefaultEvents() {
   ];
 }
 
-// ─── BREATHING ──────────────────────────────────────────────────────────────
-const BREATHING_EXERCISES = [
-  { id: "coherence", name: "Cohérence cardiaque", icon: "🫁", description: "5s inspiration, 5s expiration. 5 min de sérénité.", duration: 300, steps: [{ action: "Inspire", duration: 5 }, { action: "Expire", duration: 5 }] },
-  { id: "4-7-8", name: "Respiration 4-7-8", icon: "🌙", description: "Parfaite pour s'endormir.", duration: 240, steps: [{ action: "Inspire", duration: 4 }, { action: "Retiens", duration: 7 }, { action: "Expire", duration: 8 }] },
-  { id: "box", name: "Respiration carrée", icon: "⬜", description: "4 temps égaux. Calme et concentration.", duration: 240, steps: [{ action: "Inspire", duration: 4 }, { action: "Retiens", duration: 4 }, { action: "Expire", duration: 4 }, { action: "Retiens", duration: 4 }] },
-  { id: "relaxation", name: "Relaxation profonde", icon: "🧘", description: "Longue expiration pour tout relâcher.", duration: 300, steps: [{ action: "Inspire", duration: 4 }, { action: "Expire", duration: 8 }] },
-];
-
-function createSoundEngine() {
-  let ctx = null;
-  const getCtx = () => { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === "suspended") ctx.resume(); return ctx; };
-  const playChime = (freq = 528, type = "sine", dur = 0.6) => {
-    try {
-      const c = getCtx(), osc = c.createOscillator(), gain = c.createGain(), filt = c.createBiquadFilter();
-      filt.type = "lowpass"; filt.frequency.value = 2000; osc.type = type; osc.frequency.setValueAtTime(freq, c.currentTime);
-      gain.gain.setValueAtTime(0, c.currentTime); gain.gain.linearRampToValueAtTime(0.15, c.currentTime + 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-      osc.connect(filt); filt.connect(gain); gain.connect(c.destination); osc.start(c.currentTime); osc.stop(c.currentTime + dur);
-    } catch {}
-  };
-  return {
-    inspire: () => { playChime(396, "sine", 0.8); setTimeout(() => playChime(528, "sine", 0.5), 120); },
-    expire: () => { playChime(528, "sine", 0.8); setTimeout(() => playChime(396, "sine", 0.5), 120); },
-    hold: () => { playChime(440, "triangle", 0.4); },
-    complete: () => { playChime(396, "sine", 0.5); setTimeout(() => playChime(528, "sine", 0.5), 200); setTimeout(() => playChime(639, "sine", 0.8), 400); },
-  };
-}
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 function loadData(key, fb) { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : fb; } catch { return fb; } }
@@ -553,57 +526,6 @@ function FoodSearch({ compact }) {
   );
 }
 
-// ─── BREATHING PLAYER ───────────────────────────────────────────────────────
-function BreathingPlayer({ exercise, onClose }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [stepElapsed, setStepElapsed] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const intervalRef = useRef(null);
-  const soundRef = useRef(null);
-  const prevActionRef = useRef("");
-  if (!soundRef.current) soundRef.current = createSoundEngine();
-  const currentStep = exercise.steps[stepIndex];
-  useEffect(() => {
-    if (!isPlaying || !soundEnabled) return;
-    const act = currentStep.action;
-    if (act !== prevActionRef.current || stepElapsed === 0) {
-      if (act === "Inspire") soundRef.current.inspire(); else if (act === "Expire") soundRef.current.expire(); else soundRef.current.hold();
-      prevActionRef.current = act;
-    }
-  }, [stepIndex, stepElapsed, isPlaying, soundEnabled, currentStep]);
-  useEffect(() => {
-    if (!isPlaying) { clearInterval(intervalRef.current); return; }
-    intervalRef.current = setInterval(() => {
-      setElapsed(e => { if (e + 1 >= exercise.duration) { setIsPlaying(false); if (soundEnabled && soundRef.current) soundRef.current.complete(); return exercise.duration; } return e + 1; });
-      setStepElapsed(se => { if (se + 1 >= exercise.steps[stepIndex].duration) { setStepIndex(si => (si + 1) % exercise.steps.length); return 0; } return se + 1; });
-    }, 1000);
-    return () => clearInterval(intervalRef.current);
-  }, [isPlaying, stepIndex, exercise, soundEnabled]);
-  const reset = () => { setIsPlaying(false); setElapsed(0); setStepIndex(0); setStepElapsed(0); clearInterval(intervalRef.current); };
-  const remaining = exercise.duration - elapsed, mins = Math.floor(remaining / 60), secs = remaining % 60;
-  const stepProgress = stepElapsed / currentStep.duration;
-  const isInhale = currentStep.action === "Inspire", isHold = currentStep.action === "Retiens";
-  const bubbleScale = isInhale ? 0.6 + 0.4 * stepProgress : isHold ? 1 : 1 - 0.4 * stepProgress;
-  const actionColor = isInhale ? "#a8d8ea" : isHold ? "#d4a0c0" : "#c8b8d8";
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "linear-gradient(145deg, #faf5f8 0%, #f0e4ed 50%, #e8d5e0 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", fontSize: 28, color: "#a88b9c", cursor: "pointer", padding: 8 }}>✕</button>
-      <button onClick={() => setSoundEnabled(!soundEnabled)} style={{ position: "absolute", top: 16, left: 16, background: "rgba(183,130,163,0.1)", border: "1px solid rgba(183,130,163,0.2)", borderRadius: 12, padding: "6px 12px", fontSize: 14, color: "#7a5a6e", cursor: "pointer" }}>{soundEnabled ? "🔔" : "🔇"}</button>
-      <div style={{ fontSize: 14, color: "#a88b9c", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>{exercise.icon} {exercise.name}</div>
-      <div style={{ width: 200, height: 200, borderRadius: "50%", margin: "32px 0", background: `radial-gradient(circle, ${actionColor}44 0%, ${actionColor}22 100%)`, border: `2px solid ${actionColor}66`, display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${bubbleScale})`, transition: "transform 1s ease-in-out, background 0.5s ease" }}>
-        <div style={{ textAlign: "center" }}><div style={{ fontSize: 28, fontWeight: 700, color: "#7a5a6e" }}>{currentStep.action}</div><div style={{ fontSize: 40, fontWeight: 300, color: "#b782a3", marginTop: 4 }}>{currentStep.duration - stepElapsed}</div></div>
-      </div>
-      <div style={{ fontSize: 18, color: "#7a5a6e", fontWeight: 600, marginBottom: 32 }}>{mins}:{secs.toString().padStart(2, "0")}</div>
-      <div style={{ display: "flex", gap: 16 }}>
-        <button onClick={() => { if (!isPlaying && elapsed === 0 && soundEnabled) soundRef.current?.inspire(); setIsPlaying(!isPlaying); }} style={{ background: isPlaying ? "rgba(183,130,163,0.15)" : "linear-gradient(135deg, #d4a0c0, #b782a3)", color: isPlaying ? "#7a5a6e" : "white", border: isPlaying ? "2px solid #d4a0c0" : "none", borderRadius: 50, padding: "14px 40px", fontSize: 16, fontWeight: 600, cursor: "pointer" }}>{isPlaying ? "Pause" : elapsed > 0 ? "Reprendre" : "Commencer"}</button>
-        {elapsed > 0 && <button onClick={reset} style={{ background: "rgba(183,130,163,0.1)", color: "#a88b9c", border: "1.5px solid rgba(183,130,163,0.3)", borderRadius: 50, padding: "14px 24px", fontSize: 16, cursor: "pointer" }}>↺</button>}
-      </div>
-      {elapsed >= exercise.duration && (<div style={{ marginTop: 32, textAlign: "center", padding: "20px 28px", background: "rgba(212,160,192,0.15)", borderRadius: 16 }}><div style={{ fontSize: 24, marginBottom: 8 }}>🎉</div><div style={{ fontSize: 16, color: "#7a5a6e", fontWeight: 600 }}>Bravo !</div><div style={{ fontSize: 14, color: "#a88b9c", marginTop: 4 }}>Séance terminée. Tu as pris soin de toi et de bébé.</div></div>)}
-    </div>
-  );
-}
 
 // ─── CALENDAR VIEW ──────────────────────────────────────────────────────────
 function CalendarView({ events, setEvents }) {
@@ -849,7 +771,6 @@ function App() {
   const [page, setPage] = useState("home");
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(true);
-  const [breathingExercise, setBreathingExercise] = useState(null);
   const [quoteIndex, setQuoteIndex] = useState(() => getWeeksPregnancy().totalDays % DAILY_QUOTES.length);
 
   useEffect(() => {
@@ -904,19 +825,10 @@ function App() {
     </>
   );
 
-  const renderBreathing = () => (
-    <>
-      <div style={{ padding: "28px 20px 16px" }}><div style={{ fontSize: 22, fontWeight: 700, color: "#7a5a6e" }}>Respiration</div><div style={{ fontSize: 14, color: "#a88b9c", marginTop: 4 }}>Prends un moment pour toi 🧘</div></div>
-      {BREATHING_EXERCISES.map(ex => (<div key={ex.id} style={{ ...card, cursor: "pointer" }} onClick={() => setBreathingExercise(ex)}><div style={{ display: "flex", gap: 14, alignItems: "center" }}><div style={{ width: 50, height: 50, borderRadius: 15, background: "linear-gradient(135deg, #f3e8f0, #e8d5e0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>{ex.icon}</div><div style={{ flex: 1 }}><div style={{ fontSize: 15, fontWeight: 700, color: "#7a5a6e" }}>{ex.name}</div><div style={{ fontSize: 13, color: "#a88b9c", marginTop: 3, lineHeight: 1.4 }}>{ex.description}</div><div style={{ fontSize: 12, color: "#b782a3", marginTop: 4, fontWeight: 600 }}>{Math.floor(ex.duration / 60)} min · 🔔 Sons doux</div></div><span style={{ color: "#d4a0c0", fontSize: 20 }}>›</span></div></div>))}
-      <div style={{ ...card, opacity: 0.7, textAlign: "center" }}><div style={{ fontSize: 28, marginBottom: 8 }}>🎧</div><div style={{ fontSize: 14, fontWeight: 600, color: "#7a5a6e" }}>Tes enregistrements perso</div><div style={{ fontSize: 13, color: "#a88b9c", marginTop: 4 }}>Bientôt — tes méditations audio apparaîtront ici.</div></div>
-    </>
-  );
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "linear-gradient(170deg, #fefbfd 0%, #faf5f8 30%, #f5eef3 100%)", fontFamily: "'Nunito', 'Segoe UI', sans-serif", paddingBottom: 90, position: "relative" }}>
-      {breathingExercise && <BreathingPlayer exercise={breathingExercise} onClose={() => setBreathingExercise(null)} />}
       {page === "home" && renderHome()}
-      {page === "breathe" && renderBreathing()}
       {page === "upcoming" && (eventsLoading
         ? <div style={{textAlign:"center",padding:"60px 20px",color:"#c4adb8",fontSize:14}}>Chargement…</div>
         : <UpcomingView events={events} setEvents={setEvents} onBack={() => setPage("home")} />)}
@@ -926,7 +838,6 @@ function App() {
       {page === "gallery" && <GalleryView />}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(212,160,192,0.15)", display: "flex", justifyContent: "space-around", padding: "8px 0 16px", maxWidth: 480, margin: "0 auto", zIndex: 100 }}>
         <button style={nb("home")} onClick={() => setPage("home")}><span>🏠</span><span style={nl("home")}>Accueil</span></button>
-        <button style={nb("breathe")} onClick={() => setPage("breathe")}><span>🧘</span><span style={nl("breathe")}>Respirer</span></button>
         <button style={nb("calendar")} onClick={() => setPage("calendar")}><span>📅</span><span style={nl("calendar")}>Calendrier</span></button>
         <button style={nb("gallery")} onClick={() => setPage("gallery")}><span>📷</span><span style={nl("gallery")}>Galerie</span></button>
       </div>
