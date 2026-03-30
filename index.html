@@ -20,11 +20,19 @@
 </head>
 <body>
 <div id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script type="text/babel">
 const { useState, useEffect, useRef, useMemo } = React;
+
+// ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
+const { createClient } = window.supabase;
+const db = createClient(
+  'https://wzxzqhxbgqwifhalwiho.supabase.co',
+  'sb_publishable_Rn-n9pk-DP68xu5zvdLsvQ_DjNvqwLp'
+);
 
 // ─── CONCEPTION & DATES ─────────────────────────────────────────────────────
 const CONCEPTION_DATE = new Date(2025, 11, 29);
@@ -319,21 +327,149 @@ function createSoundEngine() {
 function loadData(key, fb) { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : fb; } catch { return fb; } }
 function saveData(key, d) { try { localStorage.setItem(key, JSON.stringify(d)); } catch {} }
 
+// ─── LION CUB ───────────────────────────────────────────────────────────────
+function LionCub({ pose, t }) {
+  const lp = t * 0.28;
+  const blink = Math.floor(t % 55) < 2;
+  const tw = Math.sin(t * 0.18) * 14;
+  const bc = "#f0c866", be = "#f8df9a", mc = "#d49020", ei = "#f4a070", nc = "#c06848", ec = "#3a2810";
+  if (pose === 'running') {
+    const bounce = Math.abs(Math.sin(lp)) * 2;
+    const l1 = Math.sin(lp) * 12, l2 = Math.sin(lp + Math.PI) * 12, l3 = Math.sin(lp + Math.PI * 0.6) * 10, l4 = Math.sin(lp + Math.PI * 1.6) * 10;
+    return (
+      <g transform={`translate(0,${-bounce})`}>
+        <path d={`M3,-8 Q${13+tw*0.3},${-16+tw} ${10+tw*0.5},${-25+tw*0.3}`} fill="none" stroke={bc} strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx={10+tw*0.5} cy={-25+tw*0.3} r="3" fill={mc}/>
+        <ellipse cx="-3" cy="-3" rx="2.5" ry="5.5" fill={bc} transform={`rotate(${-15+l3},-3,-3)`}/>
+        <ellipse cx="3" cy="-3" rx="2.5" ry="5.5" fill={bc} transform={`rotate(${15+l4},3,-3)`}/>
+        <ellipse cx="0" cy="-11" rx="9" ry="11" fill={bc}/>
+        <ellipse cx="0" cy="-8" rx="5.5" ry="7" fill={be}/>
+        <ellipse cx="-4" cy="-2" rx="2.5" ry="6" fill={bc} transform={`rotate(${-10+l1},-4,-2)`}/>
+        <ellipse cx="4" cy="-2" rx="2.5" ry="6" fill={bc} transform={`rotate(${10+l2},4,-2)`}/>
+        <circle cx="1" cy="-23" r="10" fill={mc} opacity="0.5"/>
+        <circle cx="1" cy="-23" r="8" fill={bc}/>
+        <circle cx="-5" cy="-30" r="3.5" fill={bc}/><circle cx="-5" cy="-30" r="2" fill={ei} opacity="0.7"/>
+        <circle cx="7" cy="-30" r="3.5" fill={bc}/><circle cx="7" cy="-30" r="2" fill={ei} opacity="0.7"/>
+        {blink ? <line x1="-2" y1="-24" x2="1" y2="-24" stroke={ec} strokeWidth="1.3" strokeLinecap="round"/> : <><circle cx="-1" cy="-24" r="1.8" fill={ec}/><circle cx="-0.5" cy="-24.6" r="0.5" fill="white"/></>}
+        <circle cx="3" cy="-24" r="1.8" fill={ec}/><circle cx="3.5" cy="-24.6" r="0.5" fill="white"/>
+        <ellipse cx="1" cy="-20.5" rx="2" ry="1.3" fill={nc}/>
+        <ellipse cx="1" cy="-18" rx="1.5" ry="2" fill="#f07878" opacity="0.9"/>
+      </g>
+    );
+  }
+  if (pose === 'sitting') {
+    const la = Math.sin(t * 0.06) * 5;
+    return (
+      <g>
+        <path d="M5,-5 Q18,-3 16,6 Q13,13 6,11" fill="none" stroke={bc} strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx="6" cy="11" r="2.5" fill={mc}/>
+        <ellipse cx="-8" cy="-2" rx="6" ry="5" fill={bc}/>
+        <ellipse cx="8" cy="-2" rx="6" ry="5" fill={bc}/>
+        <ellipse cx="0" cy="-12" rx="8" ry="10" fill={bc}/>
+        <ellipse cx="0" cy="-10" rx="5" ry="7" fill={be}/>
+        <ellipse cx="-5" cy="-1" rx="3" ry="4.5" fill={bc}/>
+        <ellipse cx="5" cy="-1" rx="3" ry="4.5" fill={bc}/>
+        <circle cx="0" cy="-24" r="10" fill={mc} opacity="0.5"/>
+        <circle cx="0" cy="-24" r="8" fill={bc}/>
+        <circle cx="-6" cy="-31" r="3.5" fill={bc}/><circle cx="-6" cy="-31" r="2" fill={ei} opacity="0.7"/>
+        <circle cx="6" cy="-31" r="3.5" fill={bc}/><circle cx="6" cy="-31" r="2" fill={ei} opacity="0.7"/>
+        <circle cx={-2+la*0.3} cy="-25" r="1.8" fill={ec}/>
+        <circle cx={2+la*0.3} cy="-25" r="1.8" fill={ec}/>
+        <ellipse cx="0" cy="-21.5" rx="2" ry="1.3" fill={nc}/>
+        <path d={`M-2,-20 Q0,${-18+Math.sin(t*0.08)} 2,-20`} fill="none" stroke={nc} strokeWidth="0.8" strokeLinecap="round"/>
+      </g>
+    );
+  }
+  if (pose === 'standing') {
+    const pw = Math.sin(t * 0.13) * 7;
+    return (
+      <g>
+        <path d={`M3,-12 Q${12+tw*0.2},${-20+tw*0.5} ${9+tw*0.4},${-30+tw*0.3}`} fill="none" stroke={bc} strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx={9+tw*0.4} cy={-30+tw*0.3} r="3" fill={mc}/>
+        <ellipse cx="-6" cy="-2" rx="3" ry="7" fill={bc} transform="rotate(-20,-6,-2)"/>
+        <ellipse cx="6" cy="-2" rx="3" ry="7" fill={bc} transform="rotate(20,6,-2)"/>
+        <ellipse cx="0" cy="-17" rx="7" ry="12" fill={bc}/>
+        <ellipse cx="0" cy="-14" rx="4.5" ry="8" fill={be}/>
+        <ellipse cx="-9" cy={-28+pw} rx="2.5" ry="5.5" fill={bc} transform={`rotate(${-35+pw},-9,${-28+pw})`}/>
+        <ellipse cx="9" cy={-28-pw*0.6} rx="2.5" ry="5.5" fill={bc} transform={`rotate(${35-pw*0.6},9,${-28-pw*0.6})`}/>
+        <circle cx="0" cy="-32" r="10" fill={mc} opacity="0.5"/>
+        <circle cx="0" cy="-32" r="8" fill={bc}/>
+        <circle cx="-6" cy="-39" r="3.5" fill={bc}/><circle cx="-6" cy="-39" r="2" fill={ei} opacity="0.7"/>
+        <circle cx="6" cy="-39" r="3.5" fill={bc}/><circle cx="6" cy="-39" r="2" fill={ei} opacity="0.7"/>
+        <circle cx="-2" cy="-33" r="2.2" fill={ec}/><circle cx="-1.5" cy="-33.7" r="0.6" fill="white"/>
+        <circle cx="2" cy="-33" r="2.2" fill={ec}/><circle cx="2.5" cy="-33.7" r="0.6" fill="white"/>
+        <ellipse cx="0" cy="-29" rx="2" ry="1.3" fill={nc}/>
+        <path d="M-2,-27 Q0,-25.5 2,-27" fill="none" stroke={nc} strokeWidth="1" strokeLinecap="round"/>
+      </g>
+    );
+  }
+  if (pose === 'tumbling') {
+    const rd = Math.sin(t * 0.1) * 40 + 20;
+    return (
+      <g transform={`rotate(${rd},0,-12)`}>
+        <ellipse cx="0" cy="-10" rx="9" ry="11" fill={bc}/>
+        <ellipse cx="0" cy="-7" rx="5.5" ry="7" fill={be}/>
+        <ellipse cx="-10" cy="-15" rx="2.5" ry="5.5" fill={bc} transform="rotate(-45,-10,-15)"/>
+        <ellipse cx="10" cy="-15" rx="2.5" ry="5.5" fill={bc} transform="rotate(45,10,-15)"/>
+        <ellipse cx="-10" cy="-5" rx="2.5" ry="5.5" fill={bc} transform="rotate(45,-10,-5)"/>
+        <ellipse cx="10" cy="-5" rx="2.5" ry="5.5" fill={bc} transform="rotate(-45,10,-5)"/>
+        <circle cx="0" cy="-22" r="10" fill={mc} opacity="0.5"/>
+        <circle cx="0" cy="-22" r="8" fill={bc}/>
+        <circle cx="-6" cy="-29" r="3.5" fill={bc}/>
+        <circle cx="6" cy="-29" r="3.5" fill={bc}/>
+        <line x1="-4" y1="-24" x2="-1" y2="-21" stroke={ec} strokeWidth="1.5"/>
+        <line x1="-1" y1="-24" x2="-4" y2="-21" stroke={ec} strokeWidth="1.5"/>
+        <line x1="1" y1="-24" x2="4" y2="-21" stroke={ec} strokeWidth="1.5"/>
+        <line x1="4" y1="-24" x2="1" y2="-21" stroke={ec} strokeWidth="1.5"/>
+        <text x="10" y="-28" fontSize="7" opacity="0.9">⭐</text>
+        <text x="-18" y="-26" fontSize="7" opacity="0.9">✨</text>
+      </g>
+    );
+  }
+  return null;
+}
+
 // ─── SVG BIRD & MOUSE ──────────────────────────────────────────────────────
 function BirdAndMouse() {
   const [t, setT] = useState(0);
-  useEffect(() => { const id = setInterval(() => setT(p => p + 1), 80); return () => clearInterval(id); }, []);
+  const lion = useRef({ angle: 0, speed: 0.018, pose: 'running', timer: 120 });
+  useEffect(() => {
+    const id = setInterval(() => {
+      setT(p => p + 1);
+      const l = lion.current;
+      l.timer--;
+      if (l.timer <= 0) {
+        const r = Math.random();
+        if (r < 0.72) { l.pose = 'running'; l.speed = 0.018; l.timer = 90 + Math.floor(Math.random() * 100); }
+        else { l.pose = ['sitting','standing','tumbling'][Math.floor(Math.random() * 3)]; l.speed = 0; l.timer = 35 + Math.floor(Math.random() * 35); }
+      }
+      if (l.speed > 0) l.angle += l.speed;
+    }, 80);
+    return () => clearInterval(id);
+  }, []);
   const breathe = Math.sin(t * 0.08) * 2, sway = Math.sin(t * 0.05) * 3, heartBeat = 1 + Math.sin(t * 0.2) * 0.15, blink = Math.floor(t % 40) < 2, tailWag = Math.sin(t * 0.15) * 8;
-  const wingFlutter = sway * 2 + Math.sin(t * 0.35) * 5;
-  const headNod = Math.sin(t * 0.12) * 1.2;
-  const earWiggle = Math.sin(t * 0.18) * 3;
-  const sparkleCycle = t % 240;
-  const sparkleOpacity = sparkleCycle < 8 ? Math.sin((sparkleCycle / 8) * Math.PI) : 0;
-  const sparkleX = Math.floor(t / 240) % 2 === 0 ? 42 : 138;
+  const wingFlutter = sway * 2 + Math.sin(t * 0.35) * 12;
+  const headNod = Math.sin(t * 0.12) * 3;
+  const earWiggle = Math.sin(t * 0.18) * 8;
+  const sparkleCycle = t % 120;
+  const sparkleOpacity = sparkleCycle < 10 ? Math.sin((sparkleCycle / 10) * Math.PI) : 0;
+  const sparkleX = Math.floor(t / 120) % 2 === 0 ? 42 : 138;
+  const { angle: LA, pose: lpose } = lion.current;
+  const lx = 90 + Math.cos(LA) * 60, ly = 90 + Math.sin(LA) * 20;
+  const lbehind = Math.sin(LA) < -0.1;
+  const ld = 0.72 + (Math.sin(LA) + 1) * 0.14;
+  const lflip = Math.sin(LA) > 0 ? -1 : 1;
+  const lionEl = (
+    <g transform={`translate(${lx},${ly}) scale(${ld})`}>
+      <ellipse cx="0" cy="2" rx="7" ry="2.5" fill="rgba(212,160,192,0.12)"/>
+      <g transform={`scale(${lflip},1)`}><LionCub pose={lpose} t={t}/></g>
+    </g>
+  );
   return (
     <svg viewBox="0 0 180 120" width="180" height="120" style={{ display: "block" }}>
       <ellipse cx="90" cy="110" rx="70" ry="5" fill="rgba(212,160,192,0.08)" />
       {[0, 1, 2].map(i => { const hx = 85 + Math.sin(t * 0.04 + i * 2.2) * 18, hy = 15 + Math.sin(t * 0.03 + i * 1.5) * 8 - i * 7, hop = 0.4 + Math.sin(t * 0.06 + i) * 0.15; return <text key={i} x={hx} y={hy} fontSize={9 * hop} textAnchor="middle" style={{ opacity: 0.2 + Math.sin(t * 0.05 + i * 1.3) * 0.18 }}>💕</text>; })}
+      {lbehind && lionEl}
       {/* BIRD */}
       <g transform={`translate(55, ${65 + breathe}) rotate(${sway * 0.3}, 0, 0)`}>
         <ellipse cx="0" cy="10" rx="16" ry="18" fill="#a8d8ea" />
@@ -374,6 +510,7 @@ function BirdAndMouse() {
       </g>
       <g transform={`translate(90, ${52 + breathe * 0.5}) scale(${heartBeat})`}><text textAnchor="middle" fontSize="12" y="4">❤️</text></g>
       <text x={sparkleX} y="28" fontSize="10" textAnchor="middle" style={{ opacity: sparkleOpacity }}>✨</text>
+      {!lbehind && lionEl}
     </svg>
   );
 }
@@ -488,11 +625,29 @@ function CalendarView({ events, setEvents }) {
   const selectedEvents = selectedDate ? events.filter(e => e.date === selectedDate).sort((a, b) => (a.time || "").localeCompare(b.time || "")) : [];
   const prevMonth = () => setViewMonth(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 });
   const nextMonth = () => setViewMonth(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 });
-  const toggleDone = id => setEvents(ev => ev.map(e => e.id === id ? { ...e, done: !e.done } : e));
-  const removeEvent = id => { setEvents(ev => ev.filter(e => e.id !== id)); setEditingId(null); };
-  const addEvent = () => { if (!addForm.title || !selectedDate) return; setEvents(ev => [...ev, { id: "e" + Date.now(), title: addForm.title, date: selectedDate, time: addForm.time || undefined, type: addForm.type, done: false, note: addForm.note || undefined }].sort((a, b) => a.date.localeCompare(b.date))); setAddForm({ title: "", time: "", type: "rdv", note: "" }); setShowAdd(false); };
+  const toggleDone = async (id) => {
+    const ev = events.find(e => e.id === id); if (!ev) return;
+    const newDone = !ev.done;
+    setEvents(evs => evs.map(e => e.id === id ? { ...e, done: newDone } : e));
+    await db.from('events').update({ done: newDone }).eq('id', id);
+  };
+  const removeEvent = async (id) => {
+    setEvents(evs => evs.filter(e => e.id !== id)); setEditingId(null);
+    await db.from('events').delete().eq('id', id);
+  };
+  const addEvent = async () => {
+    if (!addForm.title || !selectedDate) return;
+    const newEvent = { id: "e" + Date.now(), title: addForm.title, date: selectedDate, time: addForm.time || null, type: addForm.type, done: false, note: addForm.note || null };
+    setEvents(evs => [...evs, newEvent].sort((a, b) => a.date.localeCompare(b.date)));
+    setAddForm({ title: "", time: "", type: "rdv", note: "" }); setShowAdd(false);
+    await db.from('events').insert(newEvent);
+  };
   const startEdit = ev => { setEditingId(ev.id); setEditForm({ title: ev.title, date: ev.date, time: ev.time || "", note: ev.note || "", type: ev.type }); };
-  const saveEdit = () => { setEvents(ev => ev.map(e => e.id === editingId ? { ...e, title: editForm.title, date: editForm.date, time: editForm.time || undefined, note: editForm.note || undefined, type: editForm.type } : e).sort((a, b) => a.date.localeCompare(b.date))); setEditingId(null); };
+  const saveEdit = async () => {
+    const updated = { title: editForm.title, date: editForm.date, time: editForm.time || null, note: editForm.note || null, type: editForm.type };
+    setEvents(evs => evs.map(e => e.id === editingId ? { ...e, ...updated } : e).sort((a, b) => a.date.localeCompare(b.date))); setEditingId(null);
+    await db.from('events').update(updated).eq('id', editingId);
+  };
   const typeColor = t => t === "rdv" ? "#b782a3" : t === "task" ? "#8ec8e0" : "#f4b860";
   const inpS = { width: "100%", padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e8d5e0", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
   return (
@@ -553,10 +708,12 @@ function UpcomingView({ events, setEvents, onBack }) {
   const typeColor = t => t === "rdv" ? "#b782a3" : t === "task" ? "#8ec8e0" : "#f4b860";
   const typeIcon = t => t === "rdv" ? "🏥" : t === "task" ? "✅" : "⭐";
   const startEdit = ev => { setEditingId(ev.id); setEditDate(ev.date); setEditTime(ev.time || ""); };
-  const saveDate = () => {
+  const saveDate = async () => {
     if (!editDate) return;
-    setEvents(evs => evs.map(e => e.id === editingId ? { ...e, date: editDate, time: editTime || undefined } : e).sort((a, b) => a.date.localeCompare(b.date)));
+    const updated = { date: editDate, time: editTime || null };
+    setEvents(evs => evs.map(e => e.id === editingId ? { ...e, ...updated } : e).sort((a, b) => a.date.localeCompare(b.date)));
     setEditingId(null);
+    await db.from('events').update(updated).eq('id', editingId);
   };
   const card = { background: "white", borderRadius: 20, padding: "14px 16px", boxShadow: "0 2px 16px rgba(183,130,163,0.08)", margin: "0 16px 10px", border: "1px solid rgba(212,160,192,0.12)" };
   const inpS = { width: "100%", padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e8d5e0", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
@@ -607,13 +764,114 @@ function UpcomingView({ events, setEvents, onBack }) {
   );
 }
 
+// ─── GALLERY VIEW ───────────────────────────────────────────────────────────
+function GalleryView() {
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const loadPhotos = async () => {
+    setLoading(true);
+    const { data } = await db.storage.from('photos').list('', { sortBy: { column: 'created_at', order: 'desc' } });
+    const withUrls = (data || []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => ({
+      name: f.name,
+      url: db.storage.from('photos').getPublicUrl(f.name).data.publicUrl,
+    }));
+    setPhotos(withUrls);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadPhotos(); }, []);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const filename = `photo_${Date.now()}.${ext}`;
+    await db.storage.from('photos').upload(filename, file, { cacheControl: '3600', upsert: false });
+    await loadPhotos();
+    setUploading(false);
+    e.target.value = '';
+  };
+
+  const handleDelete = async (name) => {
+    setPhotos(ps => ps.filter(p => p.name !== name));
+    await db.storage.from('photos').remove([name]);
+  };
+
+  return (
+    <div>
+      <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
+      <div style={{ padding: '28px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#7a5a6e' }}>Galerie</div>
+          <div style={{ fontSize: 14, color: '#a88b9c', marginTop: 4 }}>Nos photos de grossesse 📷</div>
+        </div>
+        <button
+          onClick={() => fileInputRef.current && fileInputRef.current.click()}
+          disabled={uploading}
+          style={{ background: 'linear-gradient(135deg, #d4a0c0, #b782a3)', color: 'white', border: 'none', borderRadius: 14, padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          {uploading
+            ? <span style={{ display: 'inline-block', width: 16, height: 16, border: '2.5px solid rgba(255,255,255,0.4)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+            : '+'} {uploading ? 'Envoi…' : 'Photo'}
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
+      </div>
+
+      {loading && <div style={{ textAlign: 'center', padding: '60px 20px', color: '#c4adb8', fontSize: 14 }}>Chargement…</div>}
+
+      {!loading && photos.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#c4adb8' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Aucune photo pour l'instant</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>Appuie sur + Photo pour commencer.</div>
+        </div>
+      )}
+
+      {!loading && photos.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 16px 16px' }}>
+          {photos.map(photo => (
+            <div key={photo.name} style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', background: 'white', boxShadow: '0 2px 16px rgba(183,130,163,0.10)', border: '1px solid rgba(212,160,192,0.12)', aspectRatio: '1' }}>
+              <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
+              <button onClick={() => handleDelete(photo.name)} style={{ position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 function App() {
   const [page, setPage] = useState("home");
-  const [events, setEvents] = useState(() => loadData("bebe-events-v3", generateDefaultEvents()));
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [breathingExercise, setBreathingExercise] = useState(null);
   const [quoteIndex, setQuoteIndex] = useState(() => getWeeksPregnancy().totalDays % DAILY_QUOTES.length);
-  useEffect(() => saveData("bebe-events-v3", events), [events]);
+
+  useEffect(() => {
+    let channel;
+    const fetchEvents = async () => {
+      const { data, error } = await db.from('events').select('*').order('date');
+      if (error) { setEventsLoading(false); return; }
+      if (data.length === 0) {
+        const defaults = generateDefaultEvents();
+        const { error: e2 } = await db.from('events').insert(defaults);
+        if (!e2) setEvents(defaults);
+      } else {
+        setEvents(data);
+      }
+      setEventsLoading(false);
+    };
+    fetchEvents();
+    channel = db.channel('events-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, fetchEvents)
+      .subscribe();
+    return () => { if (channel) db.removeChannel(channel); };
+  }, []);
   const { saWeeks, saDays, sgWeeks, sgDays } = getWeeksPregnancy();
   const quote = DAILY_QUOTES[quoteIndex];
   const shuffleQuote = () => { let n; do { n = Math.floor(Math.random() * DAILY_QUOTES.length); } while (n === quoteIndex && DAILY_QUOTES.length > 1); setQuoteIndex(n); };
@@ -659,12 +917,18 @@ function App() {
       {breathingExercise && <BreathingPlayer exercise={breathingExercise} onClose={() => setBreathingExercise(null)} />}
       {page === "home" && renderHome()}
       {page === "breathe" && renderBreathing()}
-      {page === "upcoming" && <UpcomingView events={events} setEvents={setEvents} onBack={() => setPage("home")} />}
-      {page === "calendar" && <CalendarView events={events} setEvents={setEvents} />}
+      {page === "upcoming" && (eventsLoading
+        ? <div style={{textAlign:"center",padding:"60px 20px",color:"#c4adb8",fontSize:14}}>Chargement…</div>
+        : <UpcomingView events={events} setEvents={setEvents} onBack={() => setPage("home")} />)}
+      {page === "calendar" && (eventsLoading
+        ? <div style={{textAlign:"center",padding:"60px 20px",color:"#c4adb8",fontSize:14}}>Chargement…</div>
+        : <CalendarView events={events} setEvents={setEvents} />)}
+      {page === "gallery" && <GalleryView />}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(212,160,192,0.15)", display: "flex", justifyContent: "space-around", padding: "8px 0 16px", maxWidth: 480, margin: "0 auto", zIndex: 100 }}>
         <button style={nb("home")} onClick={() => setPage("home")}><span>🏠</span><span style={nl("home")}>Accueil</span></button>
         <button style={nb("breathe")} onClick={() => setPage("breathe")}><span>🧘</span><span style={nl("breathe")}>Respirer</span></button>
         <button style={nb("calendar")} onClick={() => setPage("calendar")}><span>📅</span><span style={nl("calendar")}>Calendrier</span></button>
+        <button style={nb("gallery")} onClick={() => setPage("gallery")}><span>📷</span><span style={nl("gallery")}>Galerie</span></button>
       </div>
     </div>
   );
