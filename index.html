@@ -625,11 +625,27 @@ function UpcomingView({ events, setEvents, onBack }) {
   const [editingId, setEditingId] = useState(null);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
-  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` })();
-  const upcoming = events.filter(e => !e.done).sort((a, b) => a.date.localeCompare(b.date));
+  const [showDone, setShowDone] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ title: "", date: "", time: "", type: "task", note: "" });
+  const pending = events.filter(e => !e.done).sort((a, b) => a.date.localeCompare(b.date));
+  const done = events.filter(e => e.done).sort((a, b) => a.date.localeCompare(b.date));
   const typeColor = t => t === "rdv" ? "#b782a3" : t === "task" ? "#8ec8e0" : "#f4b860";
-  const typeIcon = t => t === "rdv" ? "🏥" : t === "task" ? "✅" : "⭐";
   const startEdit = ev => { setEditingId(ev.id); setEditDate(ev.date); setEditTime(ev.time || ""); };
+  const addEvent = async () => {
+    if (!addForm.title || !addForm.date) return;
+    const newEvent = { id: "e" + Date.now(), title: addForm.title, date: addForm.date, time: addForm.time || null, type: addForm.type, done: false, note: addForm.note || null };
+    setEvents(evs => [...evs, newEvent].sort((a, b) => a.date.localeCompare(b.date)));
+    setAddForm({ title: "", date: "", time: "", type: "task", note: "" });
+    setShowAdd(false);
+    await db.from('events').insert(newEvent);
+  };
+  const toggleDone = async (id) => {
+    const ev = events.find(e => e.id === id); if (!ev) return;
+    const newDone = !ev.done;
+    setEvents(evs => evs.map(e => e.id === id ? { ...e, done: newDone } : e));
+    await db.from('events').update({ done: newDone }).eq('id', id);
+  };
   const saveDate = async () => {
     if (!editDate) return;
     const updated = { date: editDate, time: editTime || null };
@@ -639,47 +655,87 @@ function UpcomingView({ events, setEvents, onBack }) {
   };
   const card = { background: "white", borderRadius: 20, padding: "14px 16px", boxShadow: "0 2px 16px rgba(183,130,163,0.08)", margin: "0 16px 10px", border: "1px solid rgba(212,160,192,0.12)" };
   const inpS = { width: "100%", padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e8d5e0", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
+  const renderCard = (ev, isDone) => (
+    <div key={ev.id} style={{ ...card, cursor: isDone ? "default" : "pointer", borderLeft: `4px solid ${typeColor(ev.type)}`, opacity: isDone ? 0.6 : 1 }}
+      onClick={() => !isDone && (editingId === ev.id ? setEditingId(null) : startEdit(ev))}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={e => { e.stopPropagation(); toggleDone(ev.id); }}
+          style={{ width: 26, height: 26, borderRadius: 8, flexShrink: 0, cursor: "pointer", border: isDone ? "none" : "2px solid #d4a0c0", background: isDone ? "linear-gradient(135deg, #d4a0c0, #b782a3)" : "white", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 13, fontWeight: 700 }}>
+          {isDone ? "✓" : ""}
+        </button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e", textDecoration: isDone ? "line-through" : "none" }}>{ev.title}</div>
+          <div style={{ fontSize: 12, color: "#a88b9c", marginTop: 2 }}>
+            📅 {new Date(ev.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}{ev.time ? ` à ${ev.time}` : ""}
+          </div>
+          {ev.note && <div style={{ fontSize: 12, color: "#b782a3", marginTop: 2, fontStyle: "italic" }}>{ev.note}</div>}
+        </div>
+        {!isDone && <span style={{ color: "#d4a0c0", fontSize: 16, display: "inline-block", transition: "transform 0.2s", transform: editingId === ev.id ? "rotate(90deg)" : "none" }}>›</span>}
+      </div>
+      {!isDone && editingId === ev.id && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(212,160,192,0.2)" }} onClick={e => e.stopPropagation()}>
+          <div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600, marginBottom: 8 }}>Date exacte :</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} style={{ ...inpS, flex: 1 }} />
+            <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={{ ...inpS, flex: 1 }} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1.5px solid #e8d5e0", background: "white", color: "#a88b9c", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Annuler</button>
+            <button onClick={saveDate} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Enregistrer ✓</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
   return (
-    <div>
+    <div style={{ paddingBottom: 16 }}>
       <div style={{ padding: "28px 20px 16px", display: "flex", alignItems: "center", gap: 12 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 22, color: "#b782a3", cursor: "pointer", padding: "4px 8px 4px 0", lineHeight: 1 }}>←</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#7a5a6e" }}>À venir</div>
-          <div style={{ fontSize: 13, color: "#a88b9c", marginTop: 2 }}>Appuie sur une étape pour noter la date exacte</div>
+          <div style={{ fontSize: 13, color: "#a88b9c", marginTop: 2 }}>Coche quand c'est fait ✓</div>
         </div>
+        <button onClick={() => setShowAdd(v => !v)}
+          style={{ width: 36, height: 36, borderRadius: 12, border: "none", background: showAdd ? "#e8d5e0" : "linear-gradient(135deg, #d4a0c0, #b782a3)", color: showAdd ? "#b782a3" : "white", fontSize: 22, fontWeight: 300, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, flexShrink: 0 }}>
+          {showAdd ? "×" : "+"}
+        </button>
       </div>
-      {upcoming.map(ev => (
-        <div key={ev.id} style={{ ...card, cursor: "pointer", borderLeft: `4px solid ${typeColor(ev.type)}` }} onClick={() => editingId === ev.id ? setEditingId(null) : startEdit(ev)}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ fontSize: 22, flexShrink: 0 }}>{typeIcon(ev.type)}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#7a5a6e" }}>{ev.title}</div>
-              <div style={{ fontSize: 12, color: "#a88b9c", marginTop: 2 }}>
-                📅 {new Date(ev.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}{ev.time ? ` à ${ev.time}` : ""}
-              </div>
-              {ev.note && <div style={{ fontSize: 12, color: "#b782a3", marginTop: 2, fontStyle: "italic" }}>{ev.note}</div>}
-            </div>
-            <span style={{ color: "#d4a0c0", fontSize: 16, display: "inline-block", transition: "transform 0.2s", transform: editingId === ev.id ? "rotate(90deg)" : "none" }}>›</span>
+      {showAdd && (
+        <div style={{ background: "white", borderRadius: 16, padding: 14, margin: "0 16px 12px", border: "2px solid rgba(212,160,192,0.3)" }}>
+          <input placeholder="Titre *" value={addForm.title} onChange={e => setAddForm({ ...addForm, title: e.target.value })} style={{ ...inpS, marginBottom: 8 }} />
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input type="date" value={addForm.date} onChange={e => setAddForm({ ...addForm, date: e.target.value })} style={{ ...inpS, flex: 1 }} />
+            <input type="time" value={addForm.time} onChange={e => setAddForm({ ...addForm, time: e.target.value })} style={{ ...inpS, flex: 1 }} />
           </div>
-          {editingId === ev.id && (
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(212,160,192,0.2)" }} onClick={e => e.stopPropagation()}>
-              <div style={{ fontSize: 12, color: "#a88b9c", fontWeight: 600, marginBottom: 8 }}>Date exacte :</div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} style={{ ...inpS, flex: 1 }} />
-                <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={{ ...inpS, flex: 1 }} />
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1.5px solid #e8d5e0", background: "white", color: "#a88b9c", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Annuler</button>
-                <button onClick={saveDate} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Enregistrer ✓</button>
-              </div>
-            </div>
-          )}
+          <select value={addForm.type} onChange={e => setAddForm({ ...addForm, type: e.target.value })} style={{ ...inpS, marginBottom: 8 }}>
+            <option value="task">✅ Tâche</option>
+            <option value="rdv">🏥 RDV médical</option>
+            <option value="milestone">⭐ Étape</option>
+          </select>
+          <input placeholder="Note (optionnel)" value={addForm.note} onChange={e => setAddForm({ ...addForm, note: e.target.value })} style={{ ...inpS, marginBottom: 10 }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => { setShowAdd(false); setAddForm({ title: "", date: "", time: "", type: "task", note: "" }); }}
+              style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1.5px solid #e8d5e0", background: "white", color: "#a88b9c", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Annuler</button>
+            <button onClick={addEvent}
+              style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #d4a0c0, #b782a3)", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Ajouter ✓</button>
+          </div>
         </div>
-      ))}
-      {upcoming.length === 0 && (
+      )}
+      {pending.map(ev => renderCard(ev, false))}
+      {pending.length === 0 && done.length === 0 && (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "#c4adb8" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Tout est fait !</div>
+        </div>
+      )}
+      {done.length > 0 && (
+        <div style={{ margin: "4px 16px 0" }}>
+          <button onClick={() => setShowDone(v => !v)}
+            style={{ background: "none", border: "none", width: "100%", textAlign: "left", padding: "12px 0 8px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: "#a88b9c", fontSize: 13, fontWeight: 600 }}>
+            <span style={{ display: "inline-block", transition: "transform 0.2s", transform: showDone ? "rotate(90deg)" : "none", fontSize: 16, color: "#d4a0c0" }}>›</span>
+            Terminé ({done.length})
+          </button>
+          {showDone && done.map(ev => renderCard(ev, true))}
         </div>
       )}
     </div>
